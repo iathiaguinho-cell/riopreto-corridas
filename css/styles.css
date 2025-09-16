@@ -1,0 +1,9 @@
+/* Estilo base para garantir uma aparência consistente */
+body {
+    font-family: 'Inter', sans-serif, system-ui;
+}
+
+/* Um pequeno efeito de transição para os links do menu */
+header a {
+    transition: color 0.2s ease-in-out;
+}
