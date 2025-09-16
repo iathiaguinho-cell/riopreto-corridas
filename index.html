@@ -14,59 +14,65 @@
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-white">🏁 Portal das <span class="text-blue-400">Corridas</span></div>
             <div>
-                <a href="#calendario" class="text-gray-300 hover:text-white px-3">Calendário</a>
-                <a href="#copa-alcer" class="text-gray-300 hover:text-white px-3">Copa Alcer</a>
+                <a href="#calendario" class="nav-link">Calendário</a>
+                <a href="#copa-alcer" class="nav-link">Copa Alcer</a>
+                <a href="#calculadora" class="nav-link">Resultados</a>
             </div>
         </nav>
     </header>
 
     <main class="container mx-auto px-6 py-8">
-        <section id="calendario">
-            <h2 class="text-3xl font-bold text-center mb-8 text-white">Calendário de Corridas da Região</h2>
+        <section id="calendario" class="pt-8">
+            <h2 class="section-title">Calendário de Corridas da Região</h2>
             <div id="calendario-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <p id="loading-calendario" class="text-center col-span-full text-gray-400">Carregando calendário...</p>
+                <p id="loading-calendario" class="loading-message">Carregando calendário...</p>
             </div>
         </section>
 
-        <section id="copa-alcer" class="mt-16">
-            <h2 class="text-3xl font-bold text-center mb-8 text-white">Ranking em Tempo Real - <span class="text-blue-400">Copa Alcer</span></h2>
-            
+        <section id="copa-alcer" class="pt-16">
+            <h2 class="section-title">Ranking em Tempo Real - <span class="text-blue-400">Copa Alcer</span></h2>
             <div class="flex justify-center gap-4 mb-8">
                 <div>
-                    <label for="filtro-percurso" class="block text-sm font-medium text-gray-400">Percurso</label>
+                    <label for="filtro-percurso" class="filter-label">Percurso</label>
                     <select id="filtro-percurso" class="ranking-filter">
-                        <option value="5K">5K</option>
-                        <option value="10K">10K</option>
+                        <option value="5K">5K</option><option value="10K">10K</option>
                     </select>
                 </div>
                 <div>
-                    <label for="filtro-genero" class="block text-sm font-medium text-gray-400">Gênero</label>
+                    <label for="filtro-genero" class="filter-label">Gênero</label>
                     <select id="filtro-genero" class="ranking-filter">
-                        <option value="feminino">Feminino</option>
-                        <option value="masculino">Masculino</option>
+                        <option value="feminino">Feminino</option><option value="masculino">Masculino</option>
                     </select>
                 </div>
             </div>
-
             <div class="overflow-x-auto bg-gray-800 rounded-lg shadow-lg">
                 <table class="w-full text-sm text-left text-gray-300">
-                    <thead class="text-xs text-blue-400 uppercase bg-gray-700">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">#</th>
-                            <th scope="col" class="px-6 py-3">Atleta</th>
-                            <th scope="col" class="px-6 py-3">Assessoria</th>
-                            <th scope="col" class="px-6 py-3 text-center">Et. 1</th>
-                            <th scope="col" class="px-6 py-3 text-center">Et. 2</th>
-                            <th scope="col" class="px-6 py-3 text-center">Et. 3</th>
-                            <th scope="col" class="px-6 py-3 text-center">Et. 4</th>
-                            <th scope="col" class="px-6 py-3 text-center">Total</th>
-                        </tr>
-                    </thead>
+                    <thead class="table-header"><tr id="ranking-table-header"></tr></thead>
                     <tbody id="ranking-table-body">
-                        <tr><td colspan="8" class="text-center p-8 text-gray-400">Carregando ranking...</td></tr>
+                        <tr><td colspan="8" class="loading-message p-8">Carregando ranking...</td></tr>
                     </tbody>
                 </table>
             </div>
+        </section>
+
+        <section id="calculadora" class="pt-16">
+            <h2 class="section-title">Calculadora de Resultados por Etapa</h2>
+            <div class="max-w-3xl mx-auto bg-gray-800 p-8 rounded-lg shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                    <div class="md:col-span-2">
+                        <label for="search-name" class="filter-label">Nome do Atleta</label>
+                        <input type="text" id="search-name" placeholder="Digite o nome ou parte dele" class="search-input">
+                    </div>
+                    <div>
+                         <button id="search-button" class="search-button">
+                            <i class='bx bx-search-alt-2 mr-2'></i>Buscar
+                        </button>
+                    </div>
+                </div>
+                 <p class="text-xs text-center text-gray-500 mt-4">Atenção: A busca de resultados por etapa está em desenvolvimento. No momento, apenas os resultados da "1ª Etapa - Polícia Federal" estão disponíveis para consulta.</p>
+            </div>
+            <div id="search-results-container" class="mt-8">
+                </div>
         </section>
     </main>
 
@@ -79,7 +85,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
     <script src="js/config.js"></script>
     <script src="js/app.js"></script>
 </body>
