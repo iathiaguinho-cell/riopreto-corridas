@@ -3,7 +3,7 @@
 // ===================================================================
 
 // Configuração do Firebase
-const FIREBASE_CONFIG = {
+const firebaseConfig = {
   apiKey: "AIzaSyBppgEyO9visa_Bstktf_WFW80w-SOWG3M",
   authDomain: "corrida-rp.firebaseapp.com",
   databaseURL: "https://corrida-rp-default-rtdb.firebaseio.com",
