@@ -1,9 +1,9 @@
 // ===================================================================
-// ARQUIVO DE CONFIGURAÇÃO - NÃO COMPARTILHE ESTE ARQUIVO PUBLICAMENTE
+// ARQUIVO DE CONFIGURAÇÃO - Contém as chaves de conexão do projeto.
 // ===================================================================
 
 // Configuração do Firebase
-const firebaseConfig = {
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBppgEyO9visa_Bstktf_WFW80w-SOWG3M",
   authDomain: "corrida-rp.firebaseapp.com",
   databaseURL: "https://corrida-rp-default-rtdb.firebaseio.com",
@@ -16,5 +16,5 @@ const firebaseConfig = {
 // Configuração do Cloudinary
 const CLOUDINARY_CONFIG = {
   CLOUD_NAME: "dckxhoyug",
-  UPLOAD_PRESET: "corrida" // Pelo que você enviou, o nome do seu preset é "corrida"
+  UPLOAD_PRESET: "corrida"
 };
