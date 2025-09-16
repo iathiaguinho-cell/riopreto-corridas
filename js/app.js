@@ -1,6 +1,7 @@
 let rankingData = {};
 let resultadosEtapas = {};
 let todasCorridas = {};
+let rankingSortConfig = { column: 'classificacao', direction: 'asc' };
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Portal das Corridas inicializado. Conectando com Firebase...");
@@ -52,6 +53,10 @@ function renderCalendar(corridas) {
             `<button class="results-button" onclick="toggleResults('${corrida.id}')"><i class='bx bx-search-alt-2 mr-2'></i>Resultados</button>` :
             `<div class="race-button-disabled">Resultados em Breve</div>`;
 
+        const inscricoesBtnHTML = corrida.linkInscricao ?
+            `<a href="${corrida.linkInscricao}" target="_blank" rel="noopener noreferrer" class="inscricoes-button"><i class='bx bx-link-external mr-2'></i>Inscrições</a>` :
+            `<div class="race-button-disabled">Inscrições Encerradas</div>`;
+
         const cardHTML = `
             <div class="race-card-wrapper">
                 <div class="race-card bg-gray-800">
@@ -62,7 +67,7 @@ function renderCalendar(corridas) {
                             <p class="text-sm text-gray-400"><i class='bx bxs-map mr-1'></i>${corrida.cidade}</p>
                         </div>
                         <div class="race-buttons">
-                            <a href="#" class="race-button-disabled">Inscrições</a>
+                            ${inscricoesBtnHTML}
                             ${resultadosBtnHTML}
                         </div>
                     </div>
@@ -134,16 +139,53 @@ function updateRankingView() {
     renderRankingTable(atletas);
 }
 
+function setSort(column) {
+    if (rankingSortConfig.column === column) {
+        rankingSortConfig.direction = rankingSortConfig.direction === 'asc' ? 'desc' : 'asc';
+    } else {
+        rankingSortConfig.column = column;
+        rankingSortConfig.direction = 'asc';
+    }
+    updateRankingView();
+}
+
 function renderRankingTable(atletas) {
     const tableBody = document.getElementById("ranking-table-body");
     const header = document.getElementById("ranking-table-header");
     if (!tableBody || !header) return;
-    header.innerHTML = `<th class="px-6 py-3">#</th><th class="px-6 py-3">Atleta</th><th class="px-6 py-3">Assessoria</th><th class="px-6 py-3 text-center">Et. 1</th><th class="px-6 py-3 text-center">Et. 2</th><th class="px-6 py-3 text-center">Et. 3</th><th class="px-6 py-3 text-center">Et. 4</th><th class="px-6 py-3 text-center">Total</th>`;
+    
+    const sortIndicator = (column) => {
+        if (rankingSortConfig.column === column) {
+            return rankingSortConfig.direction === 'asc' ? '▲' : '▼';
+        }
+        return '';
+    };
+
+    header.innerHTML = `
+        <th class="px-6 py-3 sortable" onclick="setSort('classificacao')"># ${sortIndicator('classificacao')}</th>
+        <th class="px-6 py-3 sortable" onclick="setSort('nome')">Atleta ${sortIndicator('nome')}</th>
+        <th class="px-6 py-3">Assessoria</th>
+        <th class="px-6 py-3 text-center sortable" onclick="setSort('etapa1')">Et. 1 ${sortIndicator('etapa1')}</th>
+        <th class="px-6 py-3 text-center sortable" onclick="setSort('etapa2')">Et. 2 ${sortIndicator('etapa2')}</th>
+        <th class="px-6 py-3 text-center sortable" onclick="setSort('etapa3')">Et. 3 ${sortIndicator('etapa3')}</th>
+        <th class="px-6 py-3 text-center sortable" onclick="setSort('etapa4')">Et. 4 ${sortIndicator('etapa4')}</th>
+        <th class="px-6 py-3 text-center sortable" onclick="setSort('acumulado')">Total ${sortIndicator('acumulado')}</th>`;
+
     if (!atletas || atletas.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="8" class="text-center p-8 text-gray-400">Nenhum resultado para esta categoria.</td></tr>`;
         return;
     }
-    tableBody.innerHTML = atletas.map(atleta => `
+
+    const sortedAthletes = [...atletas].sort((a, b) => {
+        const col = rankingSortConfig.column;
+        const dir = rankingSortConfig.direction === 'asc' ? 1 : -1;
+        if (typeof a[col] === 'string') {
+            return a[col].localeCompare(b[col]) * dir;
+        }
+        return ( (a[col] || 0) - (b[col] || 0) ) * dir;
+    });
+
+    tableBody.innerHTML = sortedAthletes.map(atleta => `
         <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
             <td class="px-6 py-4 font-medium text-white">${atleta.classificacao}</td>
             <td class="px-6 py-4"><div class="font-semibold">${atleta.nome}</div><div class="text-xs text-gray-400">${atleta.idade} anos</div></td>
