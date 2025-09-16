@@ -13,20 +13,20 @@
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-2xl font-bold text-white">🏁 Portal das <span class="text-blue-400">Corridas</span></div>
             <div>
-                <a href="#calendario" class="nav-link">Calendário</a>
-                <a href="#copa-alcer" class="nav-link">Copa Alcer</a>
+                <a href="#calendario-copa" class="nav-link">Copa Alcer</a>
+                <a href="#calendario-geral" class="nav-link">Corridas da Região</a>
             </div>
         </nav>
     </header>
     <main class="container mx-auto px-6 py-8">
-        <section id="calendario" class="pt-8">
-            <h2 class="section-title">Calendário de Corridas da Região</h2>
-            <div id="calendario-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <p class="loading-message">Carregando calendário...</p>
+        <section id="calendario-copa" class="pt-8">
+            <h2 class="section-title">Calendário e Resultados - <span class="text-blue-400">Copa Alcer 2025</span></h2>
+            <div id="copa-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="loading-message">Carregando calendário da Copa...</p>
             </div>
         </section>
-        <section id="copa-alcer" class="pt-16">
-            <h2 class="section-title">Ranking em Tempo Real - <span class="text-blue-400">Copa Alcer</span></h2>
+        <section id="ranking-copa" class="pt-16">
+            <h2 class="section-title">Ranking Geral - <span class="text-blue-400">Copa Alcer</span></h2>
             <div class="flex justify-center gap-4 mb-8">
                 <div>
                     <label for="filtro-percurso" class="filter-label">Percurso</label>
@@ -42,6 +42,12 @@
                     <thead class="table-header"><tr id="ranking-table-header"></tr></thead>
                     <tbody id="ranking-table-body"><tr><td colspan="8" class="loading-message p-8">Carregando ranking...</td></tr></tbody>
                 </table>
+            </div>
+        </section>
+        <section id="calendario-geral" class="pt-16">
+            <h2 class="section-title">Outras Corridas da Região</h2>
+            <div id="geral-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="loading-message">Carregando outras corridas...</p>
             </div>
         </section>
     </main>
