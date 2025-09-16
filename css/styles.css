@@ -7,3 +7,18 @@ body {
 header a {
     transition: color 0.2s ease-in-out;
 }
+
+/* Estilos para os cards do calendário */
+.race-card {
+    border-left: 4px solid #3b82f6; /* Borda azul */
+}
+
+.race-date {
+    min-width: 80px; /* Largura mínima para a data */
+}
+
+.race-button {
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.05em;
+}
