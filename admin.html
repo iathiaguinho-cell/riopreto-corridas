@@ -61,18 +61,31 @@
             </div>
 
             <div class="admin-section">
-                <h2 class="text-xl font-bold mb-4 text-blue-400">Atualizar Resultados</h2>
-                <p class="text-gray-400 mb-4 text-sm">Selecione uma etapa da Copa e envie o arquivo JSON de resultados.</p>
-                <div class="mb-4">
-                    <label for="race-select-results" class="filter-label">Selecione a Etapa</label>
-                    <select id="race-select-results" class="ranking-filter w-full"></select>
+                <h2 class="text-xl font-bold mb-4 text-blue-400">Upload de Dados</h2>
+                <div class="mb-6 border-b border-gray-700 pb-6">
+                    <h3 class="font-semibold text-lg mb-2">Resultados de Etapa Individual</h3>
+                    <p class="text-gray-400 mb-4 text-sm">Use para adicionar os resultados de uma corrida recém-realizada.</p>
+                    <div class="mb-4">
+                        <label for="race-select-results" class="filter-label">Selecione a Etapa</label>
+                        <select id="race-select-results" class="ranking-filter w-full"></select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="results-file" class="filter-label">Arquivo de Resultados (.json)</label>
+                        <input type="file" id="results-file" accept=".json" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                    </div>
+                    <button id="upload-results-button" class="form-button">Enviar Resultados</button>
+                    <p id="upload-results-status" class="text-center mt-4"></p>
                 </div>
-                <div class="mb-4">
-                    <label for="results-file" class="filter-label">Arquivo de Resultados (.json)</label>
-                    <input type="file" id="results-file" accept=".json" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                <div>
+                     <h3 class="font-semibold text-lg mb-2">Ranking Final da Copa</h3>
+                     <p class="text-gray-400 mb-4 text-sm">Use para substituir todo o ranking geral da Copa com um arquivo consolidado.</p>
+                     <div class="mb-4">
+                        <label for="ranking-file" class="filter-label">Arquivo de Ranking Final (.json)</label>
+                        <input type="file" id="ranking-file" accept=".json" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-50 file:text-yellow-700 hover:file:bg-yellow-100"/>
+                    </div>
+                    <button id="upload-ranking-button" class="form-button">Enviar Ranking Final</button>
+                    <p id="upload-ranking-status" class="text-center mt-4"></p>
                 </div>
-                <button id="upload-button" class="form-button">Enviar Resultados</button>
-                <p id="upload-status" class="text-center mt-4"></p>
             </div>
         </div>
 
