@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const db = firebase.database();
     
-    // --- Elementos do DOM ---
+    // Elementos do formulário de corridas
     const raceForm = document.getElementById('race-form');
     const formTitle = document.getElementById('form-title');
     const raceIdInput = document.getElementById('race-id');
@@ -19,12 +19,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const raceDateInput = document.getElementById('race-date');
     const raceLinkInput = document.getElementById('race-link');
     const raceCalendarSelect = document.getElementById('race-calendar');
+
+    // Elementos da lista de corridas
     const copaRaceList = document.getElementById('copa-race-list');
     const geralRaceList = document.getElementById('geral-race-list');
+    
+    // Elementos do upload de resultados de ETAPA
     const resultsRaceSelect = document.getElementById('race-select-results');
-    const uploadButton = document.getElementById('upload-button');
+    const uploadResultsButton = document.getElementById('upload-results-button');
     const resultsFileInput = document.getElementById('results-file');
-    const uploadStatus = document.getElementById('upload-status');
+    const uploadResultsStatus = document.getElementById('upload-results-status');
+
+    // NOVO: Elementos do upload de RANKING FINAL
+    const rankingFileInput = document.getElementById('ranking-file');
+    const uploadRankingButton = document.getElementById('upload-ranking-button');
+    const uploadRankingStatus = document.getElementById('upload-ranking-status');
+
 
     function initializeApp() {
         console.log("Painel de Admin: Inicializado.");
@@ -35,10 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function addEventListeners() {
         raceForm.addEventListener('submit', handleRaceFormSubmit);
         document.getElementById('clear-form-button').addEventListener('click', clearForm);
-        uploadButton.addEventListener('click', handleUpload);
+        uploadResultsButton.addEventListener('click', handleResultsUpload);
+        uploadRankingButton.addEventListener('click', handleRankingUpload); // NOVO
     }
-
-    // --- LÓGICA DE GERENCIAMENTO DE CORRIDAS (CRUD) ---
 
     function loadAndDisplayRaces() {
         db.ref('corridas').on('value', snapshot => {
@@ -86,15 +95,14 @@ document.addEventListener('DOMContentLoaded', () => {
             data: raceDateInput.value,
             linkInscricao: raceLinkInput.value
         };
-        
         const id = raceIdInput.value;
         const calendar = raceCalendarSelect.value;
         const refPath = `corridas/${calendar}`;
 
         let promise;
-        if (id) { // LÓGICA DE EDIÇÃO: Se existe um ID, atualiza (update).
+        if (id) {
             promise = db.ref(`${refPath}/${id}`).update(raceData);
-        } else { // LÓGICA DE CRIAÇÃO: Se não há ID, cria um novo (push/set).
+        } else {
             const newRaceRef = db.ref(refPath).push();
             raceData.id = newRaceRef.key;
             promise = newRaceRef.set(raceData);
@@ -106,19 +114,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(error => console.error("Erro ao salvar corrida:", error));
     }
     
-    // ESTA É A FUNÇÃO RESPONSÁVEL PELA EDIÇÃO. Ela preenche o formulário para alteração.
     function populateRaceFormForEdit(id, calendar) {
         db.ref(`corridas/${calendar}/${id}`).once('value', snapshot => {
             const race = snapshot.val();
             if (race) {
                 formTitle.textContent = "Editando Corrida";
-                raceIdInput.value = id; // O ID oculto é preenchido para o submit saber que é uma edição
+                raceIdInput.value = id;
                 raceNameInput.value = race.nome;
                 raceCityInput.value = race.cidade;
                 raceDateInput.value = race.data;
                 raceLinkInput.value = race.linkInscricao || '';
                 raceCalendarSelect.value = calendar;
-                window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola para o topo para ver o formulário
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });
     }
@@ -137,8 +144,6 @@ document.addEventListener('DOMContentLoaded', () => {
         raceIdInput.value = '';
     }
 
-    // --- LÓGICA DE UPLOAD DE RESULTADOS ---
-
     function populateResultsRaceSelect(races) {
         resultsRaceSelect.innerHTML = '<option value="">Selecione uma etapa</option>';
         if(!races) return;
@@ -151,59 +156,60 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function handleUpload() {
+    function handleResultsUpload() {
         const raceId = resultsRaceSelect.value;
         const file = resultsFileInput.files[0];
-
         if (!raceId || !file) {
-            updateStatus("Selecione uma corrida e um arquivo JSON.", "error");
+            updateStatus("Selecione uma corrida e um arquivo JSON.", "error", 'results');
             return;
         }
+        readFileAsJson(file, (data) => processAndUploadResults(raceId, data), 'results');
+    }
 
+    // NOVO: Handler para o upload do Ranking Final
+    function handleRankingUpload() {
+        const file = rankingFileInput.files[0];
+        if (!file) {
+            updateStatus("Selecione um arquivo JSON de ranking.", "error", 'ranking');
+            return;
+        }
+        readFileAsJson(file, (data) => uploadFinalRanking(data), 'ranking');
+    }
+
+    function readFileAsJson(file, callback, type) {
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
-                const resultsData = JSON.parse(event.target.result);
-                processAndUploadResults(raceId, resultsData);
+                const jsonData = JSON.parse(event.target.result);
+                callback(jsonData);
             } catch (error) {
-                updateStatus(`Erro no formato do arquivo JSON: ${error.message}`, "error");
+                updateStatus(`Erro no formato do arquivo JSON: ${error.message}`, "error", type);
             }
         };
         reader.readAsText(file);
     }
     
     function processAndUploadResults(raceId, resultsData) {
-        updateStatus("Processando e enviando dados...", "loading");
-        
-        const structuredResults = { "5K": { masculino: [], feminino: [] }, "10K": { masculino: [], feminino: [] }, "17K": { masculino: [], feminino: [] } };
-
-        resultsData.forEach(atleta => {
-            const percurso = atleta.distancia;
-            const genero = atleta.genero.toLowerCase();
-
-            if (structuredResults[percurso] && structuredResults[percurso][genero]) {
-                 structuredResults[percurso][genero].push({
-                    nome: atleta.nome,
-                    classificacao: atleta.colocacao,
-                    tempo: atleta.tempo_liquido,
-                });
-            }
-        });
-        
-        db.ref('resultadosEtapas/' + raceId).set(structuredResults)
-            .then(() => {
-                updateStatus("Resultados da etapa atualizados com sucesso!", "success");
-            })
-            .catch(error => {
-                updateStatus(`Falha no envio: ${error.message}`, "error");
-            });
+        updateStatus("Enviando resultados da etapa...", "loading", 'results');
+        db.ref('resultadosEtapas/' + raceId).set(resultsData)
+            .then(() => updateStatus("Resultados da etapa atualizados com sucesso!", "success", 'results'))
+            .catch(error => updateStatus(`Falha no envio: ${error.message}`, "error", 'results'));
     }
 
-    function updateStatus(message, type) {
-        uploadStatus.textContent = message;
-        uploadStatus.className = 'text-center mt-4 ';
-        if (type === 'success') uploadStatus.classList.add('text-green-400');
-        else if (type === 'error') uploadStatus.classList.add('text-red-400');
-        else uploadStatus.classList.add('text-yellow-400');
+    // NOVO: Função para enviar o ranking final
+    function uploadFinalRanking(rankingData) {
+        updateStatus("Enviando ranking final...", "loading", 'ranking');
+        db.ref('rankingCopaAlcer').set(rankingData)
+            .then(() => updateStatus("Ranking final atualizado com sucesso!", "success", 'ranking'))
+            .catch(error => updateStatus(`Falha no envio: ${error.message}`, "error", 'ranking'));
+    }
+
+    function updateStatus(message, type, target) {
+        const statusElement = target === 'ranking' ? uploadRankingStatus : uploadResultsStatus;
+        statusElement.textContent = message;
+        statusElement.className = 'text-center mt-4 ';
+        if (type === 'success') statusElement.classList.add('text-green-400');
+        else if (type === 'error') statusElement.classList.add('text-red-400');
+        else statusElement.classList.add('text-yellow-400');
     }
 });
