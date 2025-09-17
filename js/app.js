@@ -10,6 +10,14 @@ document.addEventListener('DOMContentLoaded', () => {
         rankingSortConfig: { column: 'classificacao', direction: 'asc' }
     };
 
+    // NOVO: Elementos do Modal
+    const modalOverlay = document.getElementById('modal-overlay');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDate = document.getElementById('modal-date');
+    const modalCity = document.getElementById('modal-city');
+    const modalLink = document.getElementById('modal-link');
+    const modalContent = document.getElementById('modal-content');
+
     function initializeApp() {
         console.log("Portal das Corridas: Inicializando...");
         try {
@@ -36,6 +44,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('global-search-button').addEventListener('click', searchAthleteGlobally);
         document.getElementById('global-search-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') searchAthleteGlobally();
+        });
+        // NOVO: Listener para fechar o modal
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                closeRaceDetails();
+            }
         });
     }
 
@@ -83,7 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const fragment = document.createDocumentFragment();
         corridasArray.forEach(corrida => {
             const wrapper = document.createElement('div');
+            // MODIFICADO: Adicionado onclick para abrir o modal de detalhes
             wrapper.className = 'race-card-wrapper';
+            wrapper.setAttribute('onclick', `showRaceDetails('${corrida.id}', '${containerId.includes('copa') ? 'copaAlcer' : 'geral'}', event)`);
             
             const dataObj = new Date(`${corrida.data}T12:00:00Z`);
             const dia = String(dataObj.getDate()).padStart(2, '0');
@@ -127,11 +143,54 @@ document.addEventListener('DOMContentLoaded', () => {
         container.appendChild(fragment);
     }
 
+    // --- LÓGICA DO MODAL DE DETALHES DA CORRIDA ---
+    
+    window.showRaceDetails = function(raceId, calendar, event) {
+        // Impede que o modal abra se o clique foi num botão dentro do card
+        if (event.target.closest('a, button')) {
+            return;
+        }
+        
+        const race = appState.allCorridas[calendar]?.[raceId];
+        if (!race) {
+            console.error("Corrida não encontrada:", raceId);
+            return;
+        }
+        
+        const dataObj = new Date(`${race.data}T12:00:00Z`);
+        const dataFormatada = dataObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+        
+        modalTitle.textContent = race.nome;
+        modalDate.innerHTML = `<i class='bx bx-calendar mr-2'></i>${dataFormatada}`;
+        modalCity.innerHTML = `<i class='bx bxs-map mr-2'></i>${race.cidade}`;
+        
+        // Adicionar outras informações se existirem no banco de dados
+        modalContent.innerHTML = race.detalhes ? `<p>${race.detalhes.replace(/\n/g, '<br>')}</p>` : '<p class="text-gray-400">Mais informações serão disponibilizadas em breve.</p>';
+
+        if (race.linkInscricao) {
+            modalLink.href = race.linkInscricao;
+            modalLink.parentElement.classList.remove('hidden');
+        } else {
+             modalLink.parentElement.classList.add('hidden');
+        }
+        
+        modalOverlay.classList.remove('hidden');
+    }
+
+    window.closeRaceDetails = function() {
+        modalOverlay.classList.add('hidden');
+    }
+
+    // --- FIM DA LÓGICA DO MODAL ---
+
+
     window.toggleResults = function(raceId) {
+        event.stopPropagation(); // Impede que o modal abra ao clicar no botão
         document.getElementById(`results-${raceId}`)?.classList.toggle('hidden');
     }
 
     window.searchAthlete = function(raceId) {
+        event.stopPropagation();
         const input = document.getElementById(`search-input-${raceId}`);
         const output = document.getElementById(`results-output-${raceId}`);
         const searchTerm = input.value.trim().toUpperCase();
