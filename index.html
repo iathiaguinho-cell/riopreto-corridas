@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal das Corridas - Rio Preto e Região</title>
+    <title>Corredores de Rua - Rio Preto e Região</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
@@ -18,7 +18,7 @@
 <body class="bg-gray-900 text-gray-200">
     <header class="bg-gray-800 shadow-lg sticky top-0 z-50">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
-            <div class="text-2xl font-bold text-white">🏁 Portal das <span class="text-blue-400">Corridas</span></div>
+            <div class="text-2xl font-bold text-white">🏁 Corredores de Rua <span class="text-blue-400">Rio Preto</span></div>
             <div>
                 <a href="#calendario-copa" class="nav-link">Copa Alcer</a>
                 <a href="#calendario-geral" class="nav-link">Corridas da Região</a>
@@ -78,10 +78,30 @@
 
     <footer class="bg-gray-800 mt-12">
         <div class="container mx-auto px-6 py-4 text-center text-gray-500">
-            <p class="text-sm mb-2">Uma iniciativa de <span class="font-semibold text-gray-400">Corredores de Rua Rio Preto</span></p>
-            <p class="text-xs">&copy; 2025 Portal das Corridas. Desenvolvido com 🤖 por thIAguinho Soluções.</p>
+            <p>&copy; 2025 Corredores de Rua Rio Preto. Desenvolvido com 🤖 por thIAguinho Soluções.</p>
             <a href="login.html" class="text-xs text-gray-600 hover:text-gray-400 transition-colors mt-2 inline-block">Painel do Gestor</a>
         </div>
     </footer>
+
+    <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
+        <div id="race-details-modal" class="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full relative">
+            <button onclick="closeRaceDetails()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+            <div id="modal-header" class="p-6 border-b border-gray-700">
+                <h2 id="modal-title" class="text-2xl font-bold text-white">Nome da Corrida</h2>
+                <div class="flex items-center text-gray-400 text-sm mt-2">
+                    <span id="modal-date" class="flex items-center mr-4"><i class='bx bx-calendar mr-2'></i>Data</span>
+                    <span id="modal-city" class="flex items-center"><i class='bx bxs-map mr-2'></i>Cidade</span>
+                </div>
+            </div>
+            <div id="modal-content" class="p-6">
+                <p class="text-gray-300">Mais informações sobre a corrida, como percurso, dicas, e outras observações serão exibidas aqui.</p>
+            </div>
+            <div id="modal-footer" class="p-6 bg-gray-900 rounded-b-lg">
+                <a id="modal-link" href="#" target="_blank" rel="noopener noreferrer" class="inscricoes-button w-full">
+                    <i class='bx bx-link-external mr-2'></i>Página de Inscrição
+                </a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
