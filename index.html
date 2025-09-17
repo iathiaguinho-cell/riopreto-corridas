@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal das Corridas de Rua - Rio Preto e Região</title>
+    <title>Portal das Corridas - Rio Preto e Região</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="css/styles.css">
     <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
@@ -22,11 +22,25 @@
             <div>
                 <a href="#calendario-copa" class="nav-link">Copa Alcer</a>
                 <a href="#calendario-geral" class="nav-link">Corridas da Região</a>
+                <a href="#search-athlete" class="nav-link">Buscar Atleta</a>
             </div>
         </nav>
     </header>
 
     <main class="container mx-auto px-6 py-8">
+        
+        <section id="search-athlete" class="pt-8 mb-16">
+            <h2 class="section-title">Resultados do Atleta</h2>
+            <div class="max-w-2xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
+                <p class="text-center text-gray-400 mb-4">Digite o nome completo ou parcial do atleta para ver seu histórico de resultados em todos os eventos.</p>
+                <div class="flex gap-2">
+                    <input type="text" id="global-search-input" placeholder="Digite o nome do atleta..." class="search-input flex-grow">
+                    <button id="global-search-button" class="search-button"><i class='bx bx-search'></i> Buscar</button>
+                </div>
+                <div id="global-search-output" class="mt-6"></div>
+            </div>
+        </section>
+
         <section id="calendario-copa" class="pt-8">
             <h2 class="section-title">Calendário e Resultados - <span class="text-blue-400">Copa Alcer 2025</span></h2>
             <div id="copa-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -64,8 +78,9 @@
 
     <footer class="bg-gray-800 mt-12">
         <div class="container mx-auto px-6 py-4 text-center text-gray-500">
-            <p>&copy; 2025 Portal das Corridas. Desenvolvido com 🤖 por thIAguinho Soluções.</p>
-            <a href="login.html" class="text-xs text-gray-600 hover:text-gray-400 transition-colors">Acesso Restrito</a>
+            <p class="text-sm mb-2">Uma iniciativa de <span class="font-semibold text-gray-400">Corredores de Rua Rio Preto</span></p>
+            <p class="text-xs">&copy; 2025 Portal das Corridas. Desenvolvido com 🤖 por thIAguinho Soluções.</p>
+            <a href="login.html" class="text-xs text-gray-600 hover:text-gray-400 transition-colors mt-2 inline-block">Painel do Gestor</a>
         </div>
     </footer>
 </body>
