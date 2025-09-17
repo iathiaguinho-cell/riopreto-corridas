@@ -16,39 +16,75 @@
     <script defer src="js/auth.js"></script>
     <script defer src="js/admin.js"></script>
 </head>
-<body class="bg-gray-900 text-gray-200">
+<body id="admin-page" class="bg-gray-900 text-gray-200">
     <header class="bg-gray-800 shadow-lg">
         <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
             <div class="text-xl font-bold text-white">Painel de Gestão</div>
             <button id="logout-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors">Sair</button>
         </nav>
     </header>
-    <main class="container mx-auto px-6 py-8">
-        <h1 class="section-title">Gerenciar Corridas e Resultados</h1>
-
-        <div class="admin-section">
-            <h2 class="text-xl font-bold mb-4 text-blue-400">Adicionar/Atualizar Resultados de Etapa</h2>
-            <p class="text-gray-400 mb-4">Envie um arquivo JSON para atualizar os resultados de uma etapa e o ranking da copa. O sistema irá sobrescrever os dados existentes para a etapa informada.</p>
-            
-            <div class="mb-4">
-                <label for="race-select" class="filter-label">Selecione a Corrida (Etapa da Copa)</label>
-                <select id="race-select" class="ranking-filter w-full"></select>
-            </div>
-            
-            <div class="mb-4">
-                <label for="results-file" class="filter-label">Arquivo de Resultados (.json)</label>
-                <input type="file" id="results-file" accept=".json" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
-            </div>
-            
-            <button id="upload-button" class="form-button">Enviar Resultados</button>
-            <p id="upload-status" class="text-center mt-4"></p>
-        </div>
+    <main class="container mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        <div class="admin-section">
-            <h2 class="text-xl font-bold mb-4 text-blue-400">Gerenciar Corridas (Em desenvolvimento)</h2>
-            <p class="text-gray-400">Área para adicionar ou editar informações de corridas do calendário (Copa Alcer e Geral).</p>
+        <div class="lg:col-span-1">
+            <div class="admin-section">
+                <h2 id="form-title" class="text-xl font-bold mb-4 text-blue-400">Cadastrar Nova Corrida</h2>
+                <form id="race-form">
+                    <input type="hidden" id="race-id">
+                    <div>
+                        <label for="race-name" class="filter-label">Nome da Corrida</label>
+                        <input type="text" id="race-name" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="race-city" class="filter-label">Cidade</label>
+                        <input type="text" id="race-city" class="form-input" required>
+                    </div>
+                    <div>
+                        <label for="race-date" class="filter-label">Data</label>
+                        <input type="date" id="race-date" class="form-input" required style="color-scheme: dark;">
+                    </div>
+                     <div>
+                        <label for="race-link" class="filter-label">Link de Inscrição (Opcional)</label>
+                        <input type="url" id="race-link" placeholder="https://..." class="form-input">
+                    </div>
+                    <div>
+                        <label for="race-calendar" class="filter-label">Calendário</label>
+                        <select id="race-calendar" class="ranking-filter w-full mb-4">
+                            <option value="copaAlcer">Copa Alcer</option>
+                            <option value="geral">Corrida da Região</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="submit" class="form-button flex-1">Salvar Corrida</button>
+                        <button type="reset" id="clear-form-button" class="form-button secondary flex-1">Limpar</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="admin-section">
+                <h2 class="text-xl font-bold mb-4 text-blue-400">Atualizar Resultados</h2>
+                <p class="text-gray-400 mb-4 text-sm">Selecione uma etapa da Copa e envie o arquivo JSON de resultados.</p>
+                <div class="mb-4">
+                    <label for="race-select-results" class="filter-label">Selecione a Etapa</label>
+                    <select id="race-select-results" class="ranking-filter w-full"></select>
+                </div>
+                <div class="mb-4">
+                    <label for="results-file" class="filter-label">Arquivo de Resultados (.json)</label>
+                    <input type="file" id="results-file" accept=".json" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                </div>
+                <button id="upload-button" class="form-button">Enviar Resultados</button>
+                <p id="upload-status" class="text-center mt-4"></p>
+            </div>
         </div>
 
+        <div class="lg:col-span-2">
+            <div class="admin-section">
+                <h2 class="text-xl font-bold mb-4 text-blue-400">Corridas Cadastradas</h2>
+                <h3 class="font-semibold mt-4 mb-2">Copa Alcer</h3>
+                <div id="copa-race-list" class="space-y-2"></div>
+                <h3 class="font-semibold mt-6 mb-2">Corridas da Região</h3>
+                <div id="geral-race-list" class="space-y-2"></div>
+            </div>
+        </div>
     </main>
 </body>
 </html>
