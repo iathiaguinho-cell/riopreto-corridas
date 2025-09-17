@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Gestão - Portal das Corridas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <script defer src="js/config.js"></script>
+    <script defer src="js/auth.js"></script>
+    <script defer src="js/admin.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-200">
+    <header class="bg-gray-800 shadow-lg">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-xl font-bold text-white">Painel de Gestão</div>
+            <button id="logout-button" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded transition-colors">Sair</button>
+        </nav>
+    </header>
+    <main class="container mx-auto px-6 py-8">
+        <h1 class="section-title">Gerenciar Corridas e Resultados</h1>
+
+        <div class="admin-section">
+            <h2 class="text-xl font-bold mb-4 text-blue-400">Adicionar/Atualizar Resultados de Etapa</h2>
+            <p class="text-gray-400 mb-4">Envie um arquivo JSON para atualizar os resultados de uma etapa e o ranking da copa. O sistema irá sobrescrever os dados existentes para a etapa informada.</p>
+            
+            <div class="mb-4">
+                <label for="race-select" class="filter-label">Selecione a Corrida (Etapa da Copa)</label>
+                <select id="race-select" class="ranking-filter w-full"></select>
+            </div>
+            
+            <div class="mb-4">
+                <label for="results-file" class="filter-label">Arquivo de Resultados (.json)</label>
+                <input type="file" id="results-file" accept=".json" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+            </div>
+            
+            <button id="upload-button" class="form-button">Enviar Resultados</button>
+            <p id="upload-status" class="text-center mt-4"></p>
+        </div>
+        
+        <div class="admin-section">
+            <h2 class="text-xl font-bold mb-4 text-blue-400">Gerenciar Corridas (Em desenvolvimento)</h2>
+            <p class="text-gray-400">Área para adicionar ou editar informações de corridas do calendário (Copa Alcer e Geral).</p>
+        </div>
+
+    </main>
+</body>
+</html>
