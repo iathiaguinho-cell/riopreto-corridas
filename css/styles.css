@@ -12,14 +12,15 @@ body { font-family: 'Inter', sans-serif, system-ui; }
 .table-header .sortable:hover { color: white; }
 
 /* CALENDÁRIO */
-.race-card-wrapper { background-color: #1f2937; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1); transition: transform 0.2s ease-out; }
+.race-card-wrapper { cursor: pointer; background-color: #1f2937; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1); transition: transform 0.2s ease-out; }
 .race-card-wrapper:hover { transform: translateY(-5px); }
 .race-card { display: flex; overflow: hidden; }
 .race-date { background-color: #3b82f6; color: white; padding: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 80px; text-align: center; }
 .race-info { padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
-.race-buttons { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.race-buttons { display: flex; gap: 0.5rem; margin-top: 1rem; pointer-events: auto; /* Permite clique nos botões dentro do card */ }
+.race-buttons > * { cursor: pointer; }
 .results-button, .race-button-disabled, .inscricoes-button { text-align: center; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
-.results-button { background-color: #ca8a04; color: white; cursor: pointer; border: none; }
+.results-button { background-color: #ca8a04; color: white; border: none; }
 .results-button:hover { background-color: #a16207; }
 .inscricoes-button { background-color: #16a34a; color: white; }
 .inscricoes-button:hover { background-color: #15803d; }
@@ -52,3 +53,15 @@ body { font-family: 'Inter', sans-serif, system-ui; }
 .athlete-result-item:last-child { border-bottom: none; }
 .result-label { font-size: 0.875rem; color: #9ca3af; }
 .result-value { font-weight: 600; color: white; }
+
+/* NOVO: ESTILOS DO MODAL DE DETALHES DA CORRIDA */
+#modal-overlay {
+    transition: opacity 0.3s ease;
+}
+#race-details-modal {
+    transition: transform 0.3s ease;
+    transform: translateY(-20px);
+}
+#modal-overlay:not(.hidden) #race-details-modal {
+    transform: translateY(0);
+}
