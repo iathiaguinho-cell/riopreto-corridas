@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const db = firebase.database();
     
-    // Elementos do formulário de corridas
+    // --- Elementos do DOM ---
     const raceForm = document.getElementById('race-form');
     const formTitle = document.getElementById('form-title');
     const raceIdInput = document.getElementById('race-id');
@@ -19,17 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const raceDateInput = document.getElementById('race-date');
     const raceLinkInput = document.getElementById('race-link');
     const raceCalendarSelect = document.getElementById('race-calendar');
-
-    // Elementos da lista de corridas
     const copaRaceList = document.getElementById('copa-race-list');
     const geralRaceList = document.getElementById('geral-race-list');
-    
-    // Elementos do upload de resultados
     const resultsRaceSelect = document.getElementById('race-select-results');
     const uploadButton = document.getElementById('upload-button');
     const resultsFileInput = document.getElementById('results-file');
     const uploadStatus = document.getElementById('upload-status');
-    let corridasCopa = {};
 
     function initializeApp() {
         console.log("Painel de Admin: Inicializado.");
@@ -42,6 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('clear-form-button').addEventListener('click', clearForm);
         uploadButton.addEventListener('click', handleUpload);
     }
+
+    // --- LÓGICA DE GERENCIAMENTO DE CORRIDAS (CRUD) ---
 
     function loadAndDisplayRaces() {
         db.ref('corridas').on('value', snapshot => {
@@ -81,18 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
         element.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteRace(btn.dataset.id, btn.dataset.calendar)));
     }
 
-    function populateResultsRaceSelect(races) {
-        resultsRaceSelect.innerHTML = '<option value="">Selecione uma etapa</option>';
-        if(!races) return;
-        Object.keys(races).forEach(raceId => {
-            const race = races[raceId];
-            const option = document.createElement('option');
-            option.value = raceId;
-            option.textContent = race.nome;
-            resultsRaceSelect.appendChild(option);
-        });
-    }
-    
     function handleRaceFormSubmit(e) {
         e.preventDefault();
         const raceData = {
@@ -107,9 +92,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const refPath = `corridas/${calendar}`;
 
         let promise;
-        if (id) {
+        if (id) { // LÓGICA DE EDIÇÃO: Se existe um ID, atualiza (update).
             promise = db.ref(`${refPath}/${id}`).update(raceData);
-        } else {
+        } else { // LÓGICA DE CRIAÇÃO: Se não há ID, cria um novo (push/set).
             const newRaceRef = db.ref(refPath).push();
             raceData.id = newRaceRef.key;
             promise = newRaceRef.set(raceData);
@@ -121,24 +106,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }).catch(error => console.error("Erro ao salvar corrida:", error));
     }
     
-    function clearForm() {
-        formTitle.textContent = "Cadastrar Nova Corrida";
-        raceForm.reset();
-        raceIdInput.value = '';
-    }
-
+    // ESTA É A FUNÇÃO RESPONSÁVEL PELA EDIÇÃO. Ela preenche o formulário para alteração.
     function populateRaceFormForEdit(id, calendar) {
         db.ref(`corridas/${calendar}/${id}`).once('value', snapshot => {
             const race = snapshot.val();
             if (race) {
                 formTitle.textContent = "Editando Corrida";
-                raceIdInput.value = id;
+                raceIdInput.value = id; // O ID oculto é preenchido para o submit saber que é uma edição
                 raceNameInput.value = race.nome;
                 raceCityInput.value = race.cidade;
                 raceDateInput.value = race.data;
                 raceLinkInput.value = race.linkInscricao || '';
                 raceCalendarSelect.value = calendar;
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                window.scrollTo({ top: 0, behavior: 'smooth' }); // Rola para o topo para ver o formulário
             }
         });
     }
@@ -151,6 +131,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    function clearForm() {
+        formTitle.textContent = "Cadastrar Nova Corrida";
+        raceForm.reset();
+        raceIdInput.value = '';
+    }
+
+    // --- LÓGICA DE UPLOAD DE RESULTADOS ---
+
+    function populateResultsRaceSelect(races) {
+        resultsRaceSelect.innerHTML = '<option value="">Selecione uma etapa</option>';
+        if(!races) return;
+        Object.keys(races).forEach(raceId => {
+            const race = races[raceId];
+            const option = document.createElement('option');
+            option.value = raceId;
+            option.textContent = race.nome;
+            resultsRaceSelect.appendChild(option);
+        });
+    }
+
     function handleUpload() {
         const raceId = resultsRaceSelect.value;
         const file = resultsFileInput.files[0];
