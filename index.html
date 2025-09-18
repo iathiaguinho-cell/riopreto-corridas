@@ -28,7 +28,6 @@
     </header>
 
     <main class="container mx-auto px-6 py-8">
-        
         <section id="search-athlete" class="pt-8 mb-16">
             <h2 class="section-title">Resultados do Atleta</h2>
             <div class="max-w-2xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
@@ -66,6 +65,9 @@
                     <tbody id="ranking-table-body"><tr><td colspan="8" class="loading-message p-8">Carregando ranking...</td></tr></tbody>
                 </table>
             </div>
+            <div id="ranking-toggle-container" class="text-center mt-4 hidden">
+                 <button id="ranking-toggle-button" class="form-button secondary" style="max-width: 250px; margin: auto;">Ver Ranking Completo</button>
+            </div>
         </section>
 
         <section id="calendario-geral" class="pt-16">
@@ -78,29 +80,22 @@
 
     <footer class="bg-gray-800 mt-12">
         <div class="container mx-auto px-6 py-4 text-center text-gray-500">
-            <p>&copy; 2025 Corredores de Rua Rio Preto. Desenvolvido com 🤖 por thIAguinho Soluções - Thiago Ventura Valêncio.</p>
+            <p>&copy; 2025 Corredores de Rua Rio Preto. Desenvolvido com 🤖 por thIAguinho Soluções.</p>
             <a href="login.html" class="text-xs text-gray-600 hover:text-gray-400 transition-colors mt-2 inline-block">Painel do Gestor</a>
         </div>
     </footer>
 
     <div id="modal-overlay" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 hidden z-50">
-        <div id="race-details-modal" class="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full relative">
-            <button onclick="closeRaceDetails()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
+        <div id="results-modal" class="bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full relative flex flex-col" style="height: 90vh;">
+            <button onclick="closeResultsModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl z-10">&times;</button>
             <div id="modal-header" class="p-6 border-b border-gray-700">
-                <h2 id="modal-title" class="text-2xl font-bold text-white">Nome da Corrida</h2>
-                <div class="flex items-center text-gray-400 text-sm mt-2">
-                    <span id="modal-date" class="flex items-center mr-4"><i class='bx bx-calendar mr-2'></i>Data</span>
-                    <span id="modal-city" class="flex items-center"><i class='bx bxs-map mr-2'></i>Cidade</span>
+                <h2 id="modal-title" class="text-2xl font-bold text-white">Resultados da Corrida</h2>
+            </div>
+            <div class="p-6">
+                <input type="text" id="modal-search-input" placeholder="Buscar atleta na tabela de resultados..." class="search-input w-full">
+            </div>
+            <div id="modal-content" class="px-6 pb-6 pt-0 overflow-y-auto">
                 </div>
-            </div>
-            <div id="modal-content" class="p-6">
-                <p class="text-gray-300">Mais informações sobre a corrida, como percurso, dicas, e outras observações serão exibidas aqui.</p>
-            </div>
-            <div id="modal-footer" class="p-6 bg-gray-900 rounded-b-lg">
-                <a id="modal-link" href="#" target="_blank" rel="noopener noreferrer" class="inscricoes-button w-full">
-                    <i class='bx bx-link-external mr-2'></i>Página de Inscrição
-                </a>
-            </div>
         </div>
     </div>
 </body>
