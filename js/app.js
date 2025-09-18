@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const rankingTableBody = document.getElementById("ranking-table-body");
     const rankingToggleButton = document.getElementById("ranking-toggle-button");
     const rankingToggleContainer = document.getElementById("ranking-toggle-container");
+    const globalSearchInput = document.getElementById('global-search-input');
+    const globalSearchButton = document.getElementById('global-search-button');
 
 
     function initializeApp() {
@@ -29,7 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function addEventListeners() {
         document.getElementById('filtro-percurso').addEventListener('change', updateRankingView);
         document.getElementById('filtro-genero').addEventListener('change', updateRankingView);
-        document.getElementById('global-search-button').addEventListener('click', searchAthleteGlobally);
+        
+        // --- CORREÇÃO: Listeners do buscador geral restaurados ---
+        globalSearchButton.addEventListener('click', searchAthleteGlobally);
+        globalSearchInput.addEventListener('keypress', (e) => {
+             if (e.key === 'Enter') searchAthleteGlobally();
+        });
+        // --- FIM DA CORREÇÃO ---
+
         modalOverlay.addEventListener('click', (e) => {
             if (e.target === modalOverlay) closeResultsModal();
         });
@@ -86,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     };
 
-    // --- NOVO: LÓGICA DO MODAL DE RESULTADOS DE ETAPA ---
+    // --- LÓGICA DO MODAL DE RESULTADOS DE ETAPA ---
     window.showRaceResultsModal = function(raceId, event) {
         if (event) event.stopPropagation();
         
@@ -153,7 +162,71 @@ document.addEventListener('DOMContentLoaded', () => {
         modalOverlay.classList.add('hidden');
     }
 
-    // --- LÓGICA DO RANKING E BUSCA GLOBAL (SEM ALTERAÇÕES SIGNIFICATIVAS) ---
+    // --- LÓGICA DO BUSCADOR GERAL ---
+    function searchAthleteGlobally() {
+        const output = document.getElementById('global-search-output');
+        const searchTerm = globalSearchInput.value.trim().toUpperCase();
+
+        if (searchTerm.length < 3) {
+            output.innerHTML = `<div class="results-message warning">Digite pelo menos 3 letras.</div>`;
+            return;
+        }
+        output.innerHTML = `<div class="results-message">Buscando...</div>`;
+
+        let allResults = [];
+        for (const raceId in appState.resultadosEtapas) {
+            const raceName = appState.allCorridas.copaAlcer?.[raceId]?.nome || appState.allCorridas.geral?.[raceId]?.nome || `Etapa ${raceId}`;
+            const etapaResultados = appState.resultadosEtapas[raceId];
+            
+            for (const percurso in etapaResultados) {
+                for (const genero in etapaResultados[percurso]) {
+                    const atletas = etapaResultados[percurso][genero];
+                    if (atletas && Array.isArray(atletas)) {
+                        const filtered = atletas.filter(atleta => atleta.nome && atleta.nome.toUpperCase().includes(searchTerm));
+                        filtered.forEach(atleta => allResults.push({ ...atleta, genero, percurso, raceName, raceId }));
+                    }
+                }
+            }
+        }
+
+        if (allResults.length === 0) {
+            output.innerHTML = `<div class="results-message error">Nenhum resultado encontrado para "<strong>${globalSearchInput.value}</strong>".</div>`;
+            return;
+        }
+        displayGlobalResults(allResults);
+    }
+    
+    function displayGlobalResults(results) {
+        const output = document.getElementById('global-search-output');
+        const athletes = results.reduce((acc, current) => {
+            acc[current.nome] = acc[current.nome] || [];
+            acc[current.nome].push(current);
+            return acc;
+        }, {});
+
+        let html = '';
+        for (const athleteName in athletes) {
+            html += `
+            <div class="athlete-profile-card">
+                <div class="athlete-profile-header">${athleteName}</div>
+                <div class="p-4">
+            `;
+            athletes[athleteName].forEach(result => {
+                html += `
+                    <div class="athlete-result-item">
+                        <div><div class="result-label">Corrida</div><div class="result-value">${result.raceName}</div></div>
+                        <div><div class="result-label">Percurso</div><div class="result-value">${result.percurso} ${result.genero}</div></div>
+                        <div><div class="result-label">Posição</div><div class="result-value">${result.classificacao}º</div></div>
+                        <div><div class="result-label">Tempo</div><div class="result-value">${result.tempo}</div></div>
+                    </div>
+                `;
+            });
+            html += `</div></div>`;
+        }
+        output.innerHTML = html;
+    }
+
+    // --- LÓGICA DO RANKING ---
     function updateRankingView() {
         const percurso = document.getElementById('filtro-percurso').value;
         const genero = document.getElementById('filtro-genero').value;
@@ -164,18 +237,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderRankingTable(atletas) {
         if (!rankingTableBody) return;
         
-        const sortedAthletes = [...(atletas || [])].sort((a, b) => {
-            // Lógica de ordenação...
-            return (a.classificacao || 0) - (b.classificacao || 0);
-        });
+        const sortedAthletes = [...(atletas || [])].sort((a, b) => (a.classificacao || 0) - (b.classificacao || 0));
         
         rankingTableBody.innerHTML = sortedAthletes.map(atleta => `
             <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
                 <td class="px-6 py-4 font-medium text-white">${atleta.classificacao}</td>
-                <td class="px-6 py-4">
-                    <div class="font-semibold">${atleta.nome}</div>
-                    <div class="text-xs text-gray-400">${atleta.idade} anos</div>
-                </td>
+                <td class="px-6 py-4"><div class="font-semibold">${atleta.nome}</div><div class="text-xs text-gray-400">${atleta.idade} anos</div></td>
                 <td class="px-6 py-4">${atleta.assessoria || "Individual"}</td>
                 <td class="px-6 py-4 text-center">${atleta.etapa1 || "-"}</td>
                 <td class="px-6 py-4 text-center">${atleta.etapa2 || "-"}</td>
@@ -185,7 +252,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
         `).join("");
 
-        // NOVO: Lógica para mostrar/esconder botão de expandir
         if (sortedAthletes.length > 10) {
             rankingToggleContainer.classList.remove('hidden');
             rankingTableBody.classList.add('collapsed');
@@ -196,18 +262,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // NOVO: Função para expandir/recolher o ranking
     function toggleRankingExpansion() {
         rankingTableBody.classList.toggle('collapsed');
-        if (rankingTableBody.classList.contains('collapsed')) {
-            rankingToggleButton.textContent = 'Ver Ranking Completo';
-        } else {
-            rankingToggleButton.textContent = 'Mostrar Menos';
-        }
-    }
-    
-    function searchAthleteGlobally() {
-        // Lógica da busca global...
+        rankingToggleButton.textContent = rankingTableBody.classList.contains('collapsed') ? 'Ver Ranking Completo' : 'Mostrar Menos';
     }
 
     initializeApp();
