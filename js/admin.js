@@ -1,5 +1,5 @@
 // ===================================================================
-// ARQUIVO DE GESTÃO - Lógica do painel de administração (VERSÃO PROFISSIONAL)
+// ARQUIVO DE GESTÃO - Lógica do painel de administração (VERSÃO PROFISSIONAL COMPLETA)
 // ===================================================================
 document.addEventListener('DOMContentLoaded', () => {
     // Verificação de autenticação é a primeira coisa a ser feita
@@ -66,28 +66,89 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         function renderRaceList(races, element, calendar) {
-            // (Esta função pode ser mantida como a original, ela já é eficiente)
-            // ...
+            element.innerHTML = '';
+            if (!races) {
+                element.innerHTML = '<p class="text-gray-500">Nenhuma corrida cadastrada.</p>';
+                return;
+            }
+            const fragment = document.createDocumentFragment();
+            Object.keys(races).forEach(raceId => {
+                const race = races[raceId];
+                const item = document.createElement('div');
+                item.className = 'bg-gray-700 p-3 rounded flex justify-between items-center';
+                item.innerHTML = `
+                    <div>
+                        <p class="font-semibold">${race.nome}</p>
+                        <p class="text-sm text-gray-400">${new Date(race.data + 'T12:00:00Z').toLocaleDateString('pt-BR')} - ${race.cidade}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="edit-btn text-blue-400 hover:text-blue-300" data-id="${raceId}" data-calendar="${calendar}"><i class='bx bx-pencil'></i></button>
+                        <button class="delete-btn text-red-500 hover:text-red-400" data-id="${raceId}" data-calendar="${calendar}"><i class='bx bx-trash'></i></button>
+                    </div>
+                `;
+                fragment.appendChild(item);
+            });
+            element.appendChild(fragment);
+
+            element.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => populateRaceFormForEdit(btn.dataset.id, btn.dataset.calendar)));
+            element.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteRace(btn.dataset.id, btn.dataset.calendar)));
         }
 
         function handleRaceFormSubmit(e) {
-            // (Esta função pode ser mantida como a original)
-            // ...
+            e.preventDefault();
+            const raceData = {
+                nome: elements.raceNameInput.value,
+                cidade: elements.raceCityInput.value,
+                data: elements.raceDateInput.value,
+                linkInscricao: elements.raceLinkInput.value
+            };
+            const id = elements.raceIdInput.value;
+            const calendar = elements.raceCalendarSelect.value;
+            const refPath = `corridas/${calendar}`;
+
+            let promise;
+            if (id) {
+                promise = db.ref(`${refPath}/${id}`).update(raceData);
+            } else {
+                const newRaceRef = db.ref(refPath).push();
+                raceData.id = newRaceRef.key;
+                promise = newRaceRef.set(raceData);
+            }
+
+            promise.then(() => {
+                console.log("Corrida salva com sucesso!");
+                clearForm();
+            }).catch(error => console.error("Erro ao salvar corrida:", error));
         }
         
         function populateRaceFormForEdit(id, calendar) {
-             // (Esta função pode ser mantida como a original)
-            // ...
+            db.ref(`corridas/${calendar}/${id}`).once('value', snapshot => {
+                const race = snapshot.val();
+                if (race) {
+                    elements.formTitle.textContent = "Editando Corrida";
+                    elements.raceIdInput.value = id;
+                    elements.raceNameInput.value = race.nome;
+                    elements.raceCityInput.value = race.cidade;
+                    elements.raceDateInput.value = race.data;
+                    elements.raceLinkInput.value = race.linkInscricao || '';
+                    elements.raceCalendarSelect.value = calendar;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
         }
 
         function deleteRace(id, calendar) {
-             // (Esta função pode ser mantida como a original)
-            // ...
+            if (confirm("Tem certeza que deseja excluir esta corrida? Esta ação não pode ser desfeita.")) {
+                db.ref(`corridas/${calendar}/${id}`).remove()
+                  .then(() => console.log("Corrida excluída com sucesso."))
+                  .catch(error => console.error("Erro ao excluir corrida:", error));
+            }
         }
         
         function clearForm() {
-            // (Esta função pode ser mantida como a original)
-            // ...
+            elements.formTitle.textContent = "Cadastrar Nova Corrida";
+            elements.raceForm.reset();
+            elements.raceIdInput.value = '';
         }
 
         function populateResultsRaceSelect(races) {
@@ -172,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         function validateRankingData(data) {
             if (typeof data !== 'object' || Array.isArray(data)) return false;
             const firstKey = Object.keys(data)[0]; // Pega a primeira distância, ex: "5K"
-            if (!data[firstKey] || !data[firstKey]['Masculino'] || !data[firstKey]['Feminino']) return false;
+            if (!data[firstKey] || !data[firstKey]['Masculino'] || !data[firsKey]['Feminino']) return false;
             
             const firstAthlete = data[firstKey]['Masculino'][0] || data[firstKey]['Feminino'][0];
             if (!firstAthlete) return true; // Pode ser um ranking vazio
