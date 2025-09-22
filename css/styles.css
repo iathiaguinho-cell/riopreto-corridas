@@ -1,60 +1,146 @@
-body { font-family: 'Inter', sans-serif, system-ui; }
-.nav-link { transition: color 0.2s ease-in-out; color: #d1d5db; padding: 0 0.75rem; }
-.nav-link:hover { color: white; }
-.section-title { font-size: 1.875rem; font-weight: 700; text-align: center; margin-bottom: 2rem; color: white; }
-.loading-message { text-align: center; grid-column: 1 / -1; color: #9ca3af; padding: 2rem; }
-.loading-message.error { color: #f87171; }
-.filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #9ca3af; margin-bottom: 0.25rem; }
-.ranking-filter { background-color: #374151; border: 1px solid #4b5563; color: #d1d5db; border-radius: 0.375rem; padding: 0.5rem 2.5rem 0.5rem 0.75rem; appearance: none; background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); background-position: right 0.5rem center; background-repeat: no-repeat; background-size: 1.5em 1.5em; }
-.table-header { font-size: 0.75rem; color: #60a5fa; text-transform: uppercase; background-color: #374151; }
-.table-header .sortable { cursor: pointer; }
-.table-header .sortable:hover { color: white; }
+/* Google Fonts para uma tipografia mais elegante */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* NOVO: Estilos para Ranking Expansível */
-#ranking-table-body.collapsed {
-    max-height: 450px; /* Altura para aprox. 10 atletas */
-    overflow: hidden;
-    position: relative;
-    display: block;
+body { 
+    font-family: 'Inter', sans-serif, system-ui; 
+    scroll-behavior: smooth;
 }
-#ranking-table-body.collapsed::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50px;
-    background: linear-gradient(to top, #1f2937, transparent);
+
+.nav-link { 
+    transition: color 0.2s ease-in-out; 
+    color: #d1d5db; 
+    padding: 0 0.75rem; 
+    font-weight: 500;
 }
+.nav-link:hover { color: #60a5fa; } /* Azul para destaque */
+
+.section-title { 
+    font-size: 2.25rem; /* Maior */
+    font-weight: 800; /* Mais forte */
+    text-align: center; 
+    margin-bottom: 3rem; /* Mais espaçamento */
+    color: white; 
+}
+.loading-message { 
+    text-align: center; 
+    grid-column: 1 / -1; 
+    color: #9ca3af; 
+    padding: 2rem; 
+}
+
+/* Estilos para filtros e formulários */
+.filter-label { display: block; font-size: 0.875rem; font-weight: 500; color: #9ca3af; margin-bottom: 0.5rem; }
+.ranking-filter, .form-input { 
+    background-color: #374151; 
+    border: 1px solid #4b5563; 
+    color: #d1d5db; 
+    border-radius: 0.5rem; /* Bordas mais arredondadas */
+    padding: 0.75rem;
+    width: 100%;
+    transition: all 0.2s ease;
+}
+.ranking-filter:focus, .form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+}
+.ranking-filter {
+    appearance: none; 
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e"); 
+    background-position: right 0.75rem center; 
+    background-repeat: no-repeat; 
+    background-size: 1.5em 1.5em;
+    padding-right: 3rem;
+}
+.form-button {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    color: white;
+    background-color: #3b82f6;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.form-button:hover { background-color: #2563eb; }
+.form-button.secondary { background-color: #4b5563; }
+.form-button.secondary:hover { background-color: #5a6678; }
+
+
+/* Tabela de Ranking */
+.table-header { font-size: 0.8rem; color: #9ca3af; text-transform: uppercase; background-color: #374151; }
+.table-header th { padding: 0.75rem 1.5rem; }
+
+/* LÓGICA PARA EXPANDIR/RECOLHER TABELA */
+.ranking-table-body.collapsed tr:nth-child(n+11) {
+    display: none;
+}
+
 
 /* CALENDÁRIO */
-.race-card-wrapper { background-color: #1f2937; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1); transition: transform 0.2s ease-out; }
-.race-card-wrapper:hover { transform: translateY(-5px); }
+.race-card-wrapper { 
+    background-color: #1f2937; 
+    border-radius: 0.75rem; 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1); 
+    transition: all 0.2s ease-out; 
+    border: 1px solid #374151;
+}
+.race-card-wrapper:hover { transform: translateY(-5px); border-color: #3b82f6; }
 .race-card { display: flex; overflow: hidden; }
-.race-date { background-color: #3b82f6; color: white; padding: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 80px; text-align: center; }
+.race-date { background-color: #3b82f6; color: white; padding: 1rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 90px; text-align: center; }
 .race-info { padding: 1rem; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
-.race-buttons { display: flex; gap: 0.5rem; margin-top: 1rem; pointer-events: auto; }
-.race-buttons > * { cursor: pointer; }
-.results-button, .race-button-disabled, .inscricoes-button { text-align: center; font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.375rem; font-size: 0.875rem; transition: background-color 0.2s; display: flex; align-items: center; justify-content: center; }
-.results-button { background-color: #ca8a04; color: white; border: none; }
+.race-buttons { display: flex; gap: 0.5rem; margin-top: 1rem; }
+.results-button, .race-button-disabled, .inscricoes-button { 
+    text-align: center; 
+    font-weight: 600; 
+    padding: 0.5rem 1rem; 
+    border-radius: 0.375rem; 
+    font-size: 0.875rem; 
+    transition: all 0.2s; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+}
+.results-button { background-color: #ca8a04; color: white; }
 .results-button:hover { background-color: #a16207; }
 .inscricoes-button { background-color: #16a34a; color: white; }
 .inscricoes-button:hover { background-color: #15803d; }
 .race-button-disabled { background-color: #4b5563; color: #9ca3af; cursor: not-allowed; }
-.hidden { display: none; }
+.hidden { display: none !important; }
+
+/* Busca Global e Resultados */
 .search-input { width: 100%; background-color: #1f2937; border: 1px solid #4b5563; color: white; border-radius: 0.375rem; padding: 0.75rem; }
-.search-input:focus { outline: none; border-color: #3b82f6; }
-.search-button { background-color: #3b82f6; color: white; padding: 0.5rem; border-radius: 0.375rem; border: none; }
+.search-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); }
+.search-button { background-color: #3b82f6; color: white; padding: 0.75rem; border-radius: 0.375rem; border: none; cursor: pointer; }
 .search-button:hover { background-color: #2563eb; }
 
-/* PERFIL DO ATLETA (Busca Global) */
-.athlete-profile-card { background-color: #1f2937; border: 1px solid #374151; border-radius: 0.5rem; margin-bottom: 1rem; overflow: hidden; }
-.athlete-profile-header { background-color: #3b82f6; color: white; padding: 1rem; font-size: 1.25rem; font-weight: bold; }
-.athlete-result-item { border-bottom: 1px solid #374151; padding: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.athlete-profile-card { background-color: #1f2937; border: 1px solid #374151; border-radius: 0.75rem; margin-top: 1.5rem; overflow: hidden; }
+.athlete-profile-header { background: linear-gradient(90deg, #3b82f6, #60a5fa); color: white; padding: 1rem 1.5rem; font-size: 1.25rem; font-weight: bold; }
+.athlete-result-item { border-bottom: 1px solid #374151; padding: 1rem 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
 .athlete-result-item:last-child { border-bottom: none; }
+.result-label { font-size: 0.8rem; color: #9ca3af; font-weight: 500; margin-bottom: 0.25rem; }
+.result-value { font-size: 1rem; color: white; font-weight: 600; }
+.result-value.pos { font-size: 1.25rem; color: #60a5fa; }
 
 /* MODAL DE RESULTADOS */
 #modal-overlay { transition: opacity 0.3s ease; }
-.modal-category-title { font-size: 1.25rem; font-weight: 700; color: #60a5fa; margin-top: 1.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #4b5563; }
-.form-button.secondary { background-color: #4b5563; }
-.form-button.secondary:hover { background-color: #5a6678; }
+.modal-category-title { font-size: 1.5rem; font-weight: 700; color: #60a5fa; margin-top: 1.5rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid #4b5563; }
+
+/* Painel Admin */
+.admin-section {
+    background-color: #1f2937;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    border: 1px solid #374151;
+    margin-bottom: 2rem;
+}
+.form-container {
+    max-width: 400px;
+    margin: 5rem auto;
+    padding: 2rem;
+    background-color: #1f2937;
+    border-radius: 0.75rem;
+}
