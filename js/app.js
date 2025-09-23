@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allCorridas: {}
     };
 
+    // Mapeamento centralizado de todos os elementos para fácil manutenção
     const elements = {
         modalOverlay: document.getElementById('modal-overlay'),
         modalTitle: document.getElementById('modal-title'),
@@ -64,8 +65,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderAllCalendars() {
         const { copaAlcer, geral } = appState.allCorridas;
-        renderCalendar(copaAlcer, elements.copaContainer, 'copaAlcer');
-        renderCalendar(geral, elements.geralContainer, 'geral');
+        renderCalendar(copaAlcer, elements.copaContainer);
+        renderCalendar(geral, elements.geralContainer);
     }
 
     window.renderCalendar = function(corridas, container) {
@@ -81,8 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const dia = String(dataObj.getDate()).padStart(2, '0');
             const mes = dataObj.toLocaleString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
             
+            // **CORREÇÃO AQUI**: Adicionado 'event' para parar a propagação e garantir que o modal abra.
             const resultadosBtnHTML = appState.resultadosEtapas[corrida.id] ?
-                `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}')"><i class='bx bx-table mr-2'></i>Resultados</button>` :
+                `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}', event)"><i class='bx bx-table mr-2'></i>Resultados</button>` :
                 `<div class="race-button-disabled">Resultados em Breve</div>`;
             
             const inscricoesBtnHTML = corrida.linkInscricao ?
@@ -108,12 +110,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     };
 
-    window.showRaceResultsModal = function(raceId) {
+    window.showRaceResultsModal = function(raceId, event) {
+        if (event) event.stopPropagation();
+        
         const allRaces = { ...appState.allCorridas.copaAlcer, ...appState.allCorridas.geral };
         const race = allRaces[raceId];
         const resultsByCourse = appState.resultadosEtapas[raceId];
 
-        if (!race || !resultsByCourse) return;
+        if (!race || !resultsByCourse) {
+            console.error("Resultados não encontrados para a corrida:", raceId);
+            return;
+        }
 
         elements.modalTitle.textContent = `Resultados - ${race.nome}`;
         let contentHTML = '';
@@ -170,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let allResults = [];
         const allRaces = { ...appState.allCorridas.copaAlcer, ...appState.allCorridas.geral };
 
+        // **CORREÇÃO: Busca nos resultados das etapas**
         for (const raceId in appState.resultadosEtapas) {
             const raceName = allRaces[raceId]?.nome || `Etapa`;
             for (const percurso in appState.resultadosEtapas[raceId]) {
@@ -177,11 +185,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     const atletas = appState.resultadosEtapas[raceId][percurso][genero];
                     if (Array.isArray(atletas)) {
                         const filtered = atletas.filter(atleta => atleta.nome?.toUpperCase().includes(searchTerm));
-                        filtered.forEach(atleta => allResults.push({ ...atleta, genero, percurso, raceName }));
+                        filtered.forEach(atleta => allResults.push({ ...atleta, tipo: 'corrida', genero, percurso, raceName }));
                     }
                 }
             }
         }
+        
+        // **NOVO: Busca no Ranking da Copa Alcer**
+        for (const genero in appState.rankingData) {
+            for (const percurso in appState.rankingData[genero]) {
+                const atletas = appState.rankingData[genero][percurso];
+                if (Array.isArray(atletas)) {
+                    const filtered = atletas.filter(atleta => atleta.nome?.toUpperCase().includes(searchTerm));
+                    filtered.forEach(atleta => allResults.push({ ...atleta, tipo: 'ranking', genero, percurso, raceName: 'Copa Alcer' }));
+                }
+            }
+        }
+
         displayGlobalResults(allResults);
     }
 
@@ -199,13 +219,23 @@ document.addEventListener('DOMContentLoaded', () => {
         for (const athleteName in groupedByAthlete) {
             html += `<div class="athlete-profile-card"><div class="athlete-profile-header">${athleteName}</div><div>`;
             groupedByAthlete[athleteName].forEach(res => {
-                html += `
-                    <div class="athlete-result-item">
-                        <div><div class="result-label">Corrida</div><div class="result-value">${res.raceName}</div></div>
-                        <div><div class="result-label">Percurso</div><div class="result-value">${res.percurso} ${res.genero}</div></div>
-                        <div><div class="result-label">Posição</div><div class="result-value">${res.classificacao}º</div></div>
-                        <div><div class="result-label">Tempo</div><div class="result-value">${res.tempo}</div></div>
-                    </div>`;
+                if (res.tipo === 'corrida') {
+                    html += `
+                        <div class="athlete-result-item">
+                            <div><div class="result-label">Evento</div><div class="result-value">${res.raceName}</div></div>
+                            <div><div class="result-label">Percurso</div><div class="result-value">${res.percurso} ${res.genero}</div></div>
+                            <div><div class="result-label">Posição</div><div class="result-value">${res.classificacao}º</div></div>
+                            <div><div class="result-label">Tempo</div><div class="result-value">${res.tempo}</div></div>
+                        </div>`;
+                } else if (res.tipo === 'ranking') {
+                     html += `
+                        <div class="athlete-result-item" style="background-color: #2d3748;">
+                            <div><div class="result-label">Evento</div><div class="result-value text-blue-400">${res.raceName}</div></div>
+                            <div><div class="result-label">Percurso</div><div class="result-value">${res.percurso} ${res.genero}</div></div>
+                            <div><div class="result-label">Pos. no Ranking</div><div class="result-value">${res.classificacao}º</div></div>
+                            <div><div class="result-label">Pontos</div><div class="result-value">${res.acumulado}</div></div>
+                        </div>`;
+                }
             });
             html += `</div></div>`;
         }
