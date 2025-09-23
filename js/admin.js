@@ -1,5 +1,5 @@
 // ===================================================================
-// ARQUIVO DE GESTÃO - Lógica do painel de administração (VERSÃO RESTAURADA E CORRIGIDA)
+// ARQUIVO DE GESTÃO - Lógica do painel de administração (VERSÃO COMPLETA E CORRIGIDA)
 // ===================================================================
 document.addEventListener('DOMContentLoaded', () => {
     // Garante que o Firebase seja inicializado antes de qualquer coisa
@@ -105,8 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let promise;
             if (id) {
+                // Se tem ID, atualiza a corrida existente
                 promise = db.ref(`${refPath}/${id}`).update(raceData);
             } else {
+                // Se não tem ID, cria uma nova corrida
                 const newRaceRef = db.ref(refPath).push();
                 raceData.id = newRaceRef.key;
                 promise = newRaceRef.set(raceData);
@@ -194,8 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         function processAndUploadResults(raceId, resultsData) {
-            // *** AQUI ESTÁ A CORREÇÃO ***
-            // A validação foi removida para aceitar o JSON completo que eu te enviei
             updateStatus("Enviando resultados da etapa...", "loading", 'results');
             db.ref('resultadosEtapas/' + raceId).set(resultsData)
                 .then(() => updateStatus("Resultados da etapa atualizados com sucesso!", "success", 'results'))
