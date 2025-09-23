@@ -1,13 +1,14 @@
-// ===================================================================
-// ARQUIVO PRINCIPAL - Lógica da página pública (VERSÃO DEFINITIVA COM FAIXA ETÁRIA)
-// ===================================================================
 document.addEventListener('DOMContentLoaded', () => {
     // Garante que o Firebase seja inicializado apenas uma vez.
     if (!firebase.apps.length) {
         firebase.initializeApp(FIREBASE_CONFIG);
     }
 
-    const appState = { rankingData: {}, resultadosEtapas: {}, allCorridas: {} };
+    const appState = {
+        rankingData: {},
+        resultadosEtapas: {},
+        allCorridas: {}
+    };
 
     const elements = {
         modalOverlay: document.getElementById('modal-overlay'),
@@ -15,7 +16,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modalContent: document.getElementById('modal-content'),
         modalSearchInput: document.getElementById('modal-search-input'),
         rankingTableBody: document.getElementById("ranking-table-body"),
-        rankingTableHeader: document.getElementById('ranking-table-header'),
         rankingToggleButton: document.getElementById("ranking-toggle-button"),
         rankingToggleContainer: document.getElementById("ranking-toggle-container"),
         globalSearchInput: document.getElementById('global-search-input'),
@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
         globalSearchOutput: document.getElementById('global-search-output'),
         filtroPercurso: document.getElementById('filtro-percurso'),
         filtroGenero: document.getElementById('filtro-genero'),
-        filtroTipoRanking: document.getElementById('filtro-tipo-ranking'),
         copaContainer: document.getElementById('copa-container'),
         geralContainer: document.getElementById('geral-container')
     };
@@ -35,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addEventListeners() {
-        elements.filtroTipoRanking.addEventListener('change', updateRankingView);
         elements.filtroPercurso.addEventListener('change', updateRankingView);
         elements.filtroGenero.addEventListener('change', updateRankingView);
         elements.globalSearchButton.addEventListener('click', performGlobalSearch);
@@ -60,19 +58,20 @@ document.addEventListener('DOMContentLoaded', () => {
             updateRankingView();
         }).catch(err => {
             console.error("Falha ao carregar dados essenciais:", err);
+            elements.globalSearchOutput.innerHTML = `<p class="text-red-500 text-center p-4">Falha ao carregar dados. Verifique o console (F12).</p>`;
         });
     }
 
     function renderAllCalendars() {
         const { copaAlcer, geral } = appState.allCorridas;
-        renderCalendar(copaAlcer, elements.copaContainer);
-        renderCalendar(geral, elements.geralContainer);
+        renderCalendar(copaAlcer, elements.copaContainer, 'copaAlcer');
+        renderCalendar(geral, elements.geralContainer, 'geral');
     }
 
     window.renderCalendar = function(corridas, container) {
         if (!container) return;
         if (!corridas || Object.keys(corridas).length === 0) {
-            container.innerHTML = `<p class="text-gray-500 text-center col-span-full">Nenhuma corrida agendada neste calendário.</p>`;
+            container.innerHTML = `<p class="text-gray-500 text-center col-span-full">Nenhuma corrida agendada.</p>`;
             return;
         }
         
@@ -83,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const mes = dataObj.toLocaleString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
             
             const resultadosBtnHTML = appState.resultadosEtapas[corrida.id] ?
-                `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}', event)"><i class='bx bx-table mr-2'></i>Resultados</button>` :
+                `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}')"><i class='bx bx-table mr-2'></i>Resultados</button>` :
                 `<div class="race-button-disabled">Resultados em Breve</div>`;
             
             const inscricoesBtnHTML = corrida.linkInscricao ?
@@ -109,19 +108,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     };
 
-    window.showRaceResultsModal = function(raceId, event) {
-        if (event) event.stopPropagation();
-        
-        const race = appState.allCorridas.copaAlcer?.[raceId] || appState.allCorridas.geral?.[raceId];
+    window.showRaceResultsModal = function(raceId) {
+        const allRaces = { ...appState.allCorridas.copaAlcer, ...appState.allCorridas.geral };
+        const race = allRaces[raceId];
         const resultsByCourse = appState.resultadosEtapas[raceId];
 
-        if (!race || !resultsByCourse) {
-            console.error("Resultados não encontrados para a corrida:", raceId);
-            return;
-        }
+        if (!race || !resultsByCourse) return;
 
         elements.modalTitle.textContent = `Resultados - ${race.nome}`;
-        
         let contentHTML = '';
         for (const percurso in resultsByCourse) {
             for (const genero in resultsByCourse[percurso]) {
@@ -131,14 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     contentHTML += `
                         <div class="overflow-x-auto">
                             <table class="w-full text-sm text-left text-gray-300 results-table">
-                                <thead class="table-header">
-                                    <tr>
-                                        <th class="px-4 py-2">#</th>
-                                        <th class="px-4 py-2">Atleta</th>
-                                        <th class="px-4 py-2">Equipe</th>
-                                        <th class="px-4 py-2">Tempo</th>
-                                    </tr>
-                                </thead>
+                                <thead class="table-header"><tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Atleta</th><th class="px-4 py-2">Equipe</th><th class="px-4 py-2">Tempo</th></tr></thead>
                                 <tbody>
                                     ${atletas.map(atleta => `
                                         <tr class="bg-gray-800 border-b border-gray-700">
@@ -150,12 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     `).join('')}
                                 </tbody>
                             </table>
-                        </div>
-                    `;
+                        </div>`;
                 }
             }
         }
-
         elements.modalContent.innerHTML = contentHTML;
         elements.modalSearchInput.value = '';
         elements.modalSearchInput.onkeyup = () => filterResultsInModal();
@@ -164,14 +149,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function filterResultsInModal() {
         const searchTerm = elements.modalSearchInput.value.toUpperCase();
-        const tables = elements.modalContent.querySelectorAll('.results-table tbody');
-        tables.forEach(tbody => {
-            const rows = tbody.querySelectorAll('tr');
-            rows.forEach(row => {
-                const athleteName = row.cells[1].textContent.toUpperCase();
-                const teamName = row.cells[2].textContent.toUpperCase();
-                row.style.display = (athleteName.includes(searchTerm) || teamName.includes(searchTerm)) ? '' : 'none';
-            });
+        elements.modalContent.querySelectorAll('.results-table tbody tr').forEach(row => {
+            const athleteName = row.cells[1].textContent.toUpperCase();
+            row.style.display = athleteName.includes(searchTerm) ? '' : 'none';
         });
     }
 
@@ -186,35 +166,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         elements.globalSearchOutput.innerHTML = `<p class="text-gray-400 text-center p-4">Buscando...</p>`;
-
+        
         let allResults = [];
+        const allRaces = { ...appState.allCorridas.copaAlcer, ...appState.allCorridas.geral };
+
         for (const raceId in appState.resultadosEtapas) {
-            const raceName = appState.allCorridas.copaAlcer?.[raceId]?.nome || appState.allCorridas.geral?.[raceId]?.nome || `Etapa ${raceId}`;
-            const etapaResultados = appState.resultadosEtapas[raceId];
-            
-            for (const percurso in etapaResultados) {
-                for (const genero in etapaResultados[percurso]) {
-                    const atletas = etapaResultados[percurso][genero];
-                    if (atletas && Array.isArray(atletas)) {
-                        const filtered = atletas.filter(atleta => atleta.nome && atleta.nome.toUpperCase().includes(searchTerm));
-                        filtered.forEach(atleta => allResults.push({ ...atleta, genero, percurso, raceName, raceId }));
+            const raceName = allRaces[raceId]?.nome || `Etapa`;
+            for (const percurso in appState.resultadosEtapas[raceId]) {
+                for (const genero in appState.resultadosEtapas[raceId][percurso]) {
+                    const atletas = appState.resultadosEtapas[raceId][percurso][genero];
+                    if (Array.isArray(atletas)) {
+                        const filtered = atletas.filter(atleta => atleta.nome?.toUpperCase().includes(searchTerm));
+                        filtered.forEach(atleta => allResults.push({ ...atleta, genero, percurso, raceName }));
                     }
                 }
             }
         }
-
-        if (allResults.length === 0) {
-            elements.globalSearchOutput.innerHTML = `<p class="text-red-400 text-center p-4">Nenhum resultado encontrado para "<strong>${elements.globalSearchInput.value}</strong>".</p>`;
-            return;
-        }
-
         displayGlobalResults(allResults);
     }
 
     function displayGlobalResults(results) {
+        if (results.length === 0) {
+            elements.globalSearchOutput.innerHTML = `<p class="text-red-400 text-center p-4">Nenhum resultado encontrado.</p>`;
+            return;
+        }
         const groupedByAthlete = results.reduce((acc, result) => {
-            if (!acc[result.nome]) { acc[result.nome] = []; }
-            acc[result.nome].push(result);
+            (acc[result.nome] = acc[result.nome] || []).push(result);
             return acc;
         }, {});
 
@@ -226,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="athlete-result-item">
                         <div><div class="result-label">Corrida</div><div class="result-value">${res.raceName}</div></div>
                         <div><div class="result-label">Percurso</div><div class="result-value">${res.percurso} ${res.genero}</div></div>
-                        <div><div class="result-label">Posição</div><div class="result-value pos">${res.classificacao}º</div></div>
+                        <div><div class="result-label">Posição</div><div class="result-value">${res.classificacao}º</div></div>
                         <div><div class="result-label">Tempo</div><div class="result-value">${res.tempo}</div></div>
                     </div>`;
             });
@@ -236,109 +213,37 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateRankingView() {
-        const tipoRanking = elements.filtroTipoRanking.value;
         const percurso = elements.filtroPercurso.value;
         const genero = elements.filtroGenero.value;
-
-        const rankingData = appState.rankingData[genero]?.[percurso];
-
-        if (!rankingData) {
-            renderRankingGeral([]); // Usa a função geral para mostrar tabela vazia
-            return;
-        }
-
-        if (tipoRanking === 'geral') {
-            renderRankingGeral(rankingData.geral || []);
-        } else {
-            renderRankingFaixaEtaria(rankingData.faixas_etarias || {});
-        }
+        const atletas = appState.rankingData[genero]?.[percurso] || [];
+        renderRankingTable(atletas);
     }
-
-    function renderRankingGeral(athletes) {
-        elements.rankingTableHeader.innerHTML = `
-            <th class="px-6 py-3">Pos.</th>
-            <th class="px-6 py-3">Atleta</th>
-            <th class="px-6 py-3 text-center">Etapa 1</th>
-            <th class="px-6 py-3 text-center">Etapa 2</th>
-            <th class="px-6 py-3 text-center">Etapa 3</th>
-            <th class="px-6 py-3 text-center">Etapa 4</th>
+    
+    function renderRankingTable(atletas) {
+        if (!elements.rankingTableBody) return;
+        const header = document.getElementById('ranking-table-header');
+        header.innerHTML = `
+            <th class="px-6 py-3">Pos.</th><th class="px-6 py-3">Atleta</th>
+            <th class="px-6 py-3 text-center">Etapa 1</th><th class="px-6 py-3 text-center">Etapa 2</th>
+            <th class="px-6 py-3 text-center">Etapa 3</th><th class="px-6 py-3 text-center">Etapa 4</th>
             <th class="px-6 py-3 text-center">Pontos</th>
         `;
-
-        const sortedAthletes = [...athletes].sort((a, b) => (a.classificacao || 9999) - (b.classificacao || 9999));
-
-        if (sortedAthletes.length === 0) {
-            showEmptyRanking(7);
-            return;
-        }
-
+        
+        const sortedAthletes = [...atletas].sort((a, b) => (a.classificacao || 999) - (b.classificacao || 999));
+        
         elements.rankingTableBody.innerHTML = sortedAthletes.map(atleta => `
             <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
-                <td class="px-6 py-4 font-medium text-white">${atleta.classificacao}º</td>
-                <td class="px-6 py-4">
-                    <div class="font-semibold text-white">${atleta.nome}</div>
-                    <div class="text-xs text-gray-400">${atleta.assessoria || "Individual"}</div>
-                </td>
+                <td class="px-6 py-4 font-medium text-white">${atleta.classificacao}</td>
+                <td class="px-6 py-4"><div class="font-semibold">${atleta.nome}</div><div class="text-xs text-gray-400">${atleta.idade} anos</div></td>
                 <td class="px-6 py-4 text-center">${atleta.etapa1 || "-"}</td>
                 <td class="px-6 py-4 text-center">${atleta.etapa2 || "-"}</td>
                 <td class="px-6 py-4 text-center">${atleta.etapa3 || "-"}</td>
                 <td class="px-6 py-4 text-center">${atleta.etapa4 || "-"}</td>
-                <td class="px-6 py-4 text-center font-bold text-blue-400 text-lg">${atleta.acumulado}</td>
+                <td class="px-6 py-4 text-center font-bold text-blue-400">${atleta.acumulado}</td>
             </tr>
         `).join("");
-        
-        handleTableExpansion(sortedAthletes.length);
-    }
 
-    function renderRankingFaixaEtaria(faixas) {
-        elements.rankingTableHeader.innerHTML = `
-            <th class="px-6 py-3">Pos. Faixa</th>
-            <th class="px-6 py-3">Atleta</th>
-            <th class="px-6 py-3">Idade</th>
-            <th class="px-6 py-3 text-center">Pontos</th>
-        `;
-
-        let html = '';
-        let totalAthletes = 0;
-        const sortedFaixas = Object.keys(faixas).sort();
-
-        for (const faixa of sortedFaixas) {
-            const athletes = faixas[faixa];
-            totalAthletes += athletes.length;
-            
-            html += `<tr class="bg-gray-700"><td colspan="4" class="px-6 py-2 font-bold text-blue-400">Faixa Etária: ${faixa} anos</td></tr>`;
-            
-            athletes.forEach(atleta => {
-                html += `
-                    <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
-                        <td class="px-6 py-4 font-medium text-white">${atleta.classificacao_faixa}º</td>
-                        <td class="px-6 py-4">
-                            <div class="font-semibold text-white">${atleta.nome}</div>
-                            <div class="text-xs text-gray-400">${atleta.assessoria || "Individual"}</div>
-                        </td>
-                        <td class="px-6 py-4 text-center">${atleta.idade}</td>
-                        <td class="px-6 py-4 text-center font-bold text-blue-400 text-lg">${atleta.acumulado}</td>
-                    </tr>
-                `;
-            });
-        }
-        
-        if (totalAthletes === 0) {
-            showEmptyRanking(4);
-            return;
-        }
-
-        elements.rankingTableBody.innerHTML = html;
-        handleTableExpansion(totalAthletes);
-    }
-    
-    function showEmptyRanking(colspan) {
-        elements.rankingTableBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center p-8 text-gray-400">Nenhum atleta no ranking para esta seleção.</td></tr>`;
-        elements.rankingToggleContainer.classList.add('hidden');
-    }
-
-    function handleTableExpansion(count) {
-        if (count > 10) {
+        if (sortedAthletes.length > 10) {
             elements.rankingToggleContainer.classList.remove('hidden');
             elements.rankingTableBody.classList.add('collapsed');
             elements.rankingToggleButton.textContent = 'Ver Ranking Completo';
@@ -349,8 +254,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function toggleRankingExpansion() {
-        const isCollapsed = elements.rankingTableBody.classList.toggle('collapsed');
-        elements.rankingToggleButton.textContent = isCollapsed ? 'Ver Ranking Completo' : 'Mostrar Menos';
+        elements.rankingTableBody.classList.toggle('collapsed');
+        elements.rankingToggleButton.textContent = elements.rankingTableBody.classList.contains('collapsed') ? 'Ver Ranking Completo' : 'Mostrar Menos';
     }
 
     initializeApp();
