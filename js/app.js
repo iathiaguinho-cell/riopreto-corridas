@@ -1,3 +1,6 @@
+// ===================================================================
+// ARQUIVO PRINCIPAL - Lógica da página pública (VERSÃO FINAL E ESTÁVEL)
+// ===================================================================
 document.addEventListener('DOMContentLoaded', () => {
     if (!firebase.apps.length) {
         firebase.initializeApp(FIREBASE_CONFIG);
@@ -23,7 +26,8 @@ document.addEventListener('DOMContentLoaded', () => {
         filtroPercurso: document.getElementById('filtro-percurso'),
         filtroGenero: document.getElementById('filtro-genero'),
         copaContainer: document.getElementById('copa-container'),
-        geralContainer: document.getElementById('geral-container')
+        geralContainer: document.getElementById('geral-container'),
+        resultadosContainer: document.getElementById('resultados-container') // Novo container
     };
 
     function initializeApp() {
@@ -43,46 +47,62 @@ document.addEventListener('DOMContentLoaded', () => {
     function fetchAllData() {
         const db = firebase.database();
         
-        db.ref('corridas').on('value', s => { 
-            appState.allCorridas = s.val() || {}; 
-            renderAllCalendars(); 
-        });
-        db.ref('resultadosEtapas').on('value', s => { 
-            appState.resultadosEtapas = s.val() || {}; 
-            renderAllCalendars(); 
-        });
-        db.ref('rankingCopaAlcer').on('value', s => { 
-            appState.rankingData = s.val() || {}; 
-            updateRankingView(); 
+        db.ref().on('value', snapshot => {
+            const data = snapshot.val() || {};
+            appState.allCorridas = data.corridas || { copaAlcer: {}, geral: {} };
+            appState.resultadosEtapas = data.resultadosEtapas || {};
+            appState.rankingData = data.rankingCopaAlcer || {};
+            
+            console.log("Dados carregados com sucesso:", appState);
+            renderContent();
+        }, error => {
+            console.error("Falha ao carregar dados do Firebase:", error);
         });
     }
 
-    function renderAllCalendars() {
-        if (!appState.allCorridas) return;
-        renderCalendar(appState.allCorridas.copaAlcer, 'copa-container');
-        renderCalendar(appState.allCorridas.geral, 'geral-container');
+    function renderContent() {
+        const todasCorridasCopa = Object.values(appState.allCorridas.copaAlcer || {});
+        const todasCorridasGerais = Object.values(appState.allCorridas.geral || {});
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        // Separa corridas da Copa em agendadas e realizadas
+        const corridasAgendadasCopa = todasCorridasCopa.filter(c => new Date(c.data) >= hoje);
+        const corridasRealizadas = todasCorridasCopa.filter(c => new Date(c.data) < hoje);
+        
+        // Renderiza calendários de corridas futuras
+        renderCalendar(corridasAgendadasCopa, elements.copaContainer, 'inscrições');
+        renderCalendar(todasCorridasGerais, elements.geralContainer, 'inscrições');
+
+        // Renderiza a lista de corridas com resultados
+        renderCalendar(corridasRealizadas, elements.resultadosContainer, 'resultados');
+        
+        updateRankingView();
     }
 
-    window.renderCalendar = function(corridas, containerId) {
-        const container = document.getElementById(containerId);
-        if (!container || !corridas) {
-            container.innerHTML = '<p class="loading-message">Nenhuma corrida cadastrada.</p>';
+    function renderCalendar(corridas, container, buttonType) {
+        if (!container) return;
+        if (!corridas || corridas.length === 0) {
+            container.innerHTML = `<p class="text-gray-500 text-center col-span-full">Nenhuma corrida nesta categoria.</p>`;
             return;
         }
         
-        const corridasArray = Object.values(corridas).sort((a, b) => new Date(a.data) - new Date(b.data));
-        container.innerHTML = corridasArray.map(corrida => {
+        const sortedCorridas = corridas.sort((a, b) => new Date(a.data) - new Date(b.data));
+        container.innerHTML = sortedCorridas.map(corrida => {
             const dataObj = new Date(`${corrida.data}T12:00:00Z`);
             const dia = String(dataObj.getDate()).padStart(2, '0');
             const mes = dataObj.toLocaleString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
             
-            const resultadosBtnHTML = appState.resultadosEtapas[corrida.id] ?
-                `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}', event)"><i class='bx bx-table mr-2'></i>Resultados</button>` :
-                `<div class="race-button-disabled">Resultados em Breve</div>`;
-            
-            const inscricoesBtnHTML = corrida.linkInscricao ?
-                `<a href="${corrida.linkInscricao}" target="_blank" rel="noopener noreferrer" class="inscricoes-button"><i class='bx bx-link-external mr-2'></i>Inscrições</a>` :
-                `<div class="race-button-disabled">Inscrições Encerradas</div>`;
+            let actionButtonHTML = '';
+            if (buttonType === 'inscrições') {
+                actionButtonHTML = corrida.linkInscricao ?
+                    `<a href="${corrida.linkInscricao}" target="_blank" rel="noopener noreferrer" class="inscricoes-button"><i class='bx bx-link-external mr-2'></i>Inscrições</a>` :
+                    `<div class="race-button-disabled">Inscrições Encerradas</div>`;
+            } else { // 'resultados'
+                actionButtonHTML = appState.resultadosEtapas[corrida.id] ?
+                    `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}', event)"><i class='bx bx-table mr-2'></i>Ver Resultados</button>` :
+                    `<div class="race-button-disabled">Resultados em Breve</div>`;
+            }
 
             return `
                 <div class="race-card-wrapper">
@@ -94,14 +114,13 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <p class="text-sm text-gray-400"><i class='bx bxs-map mr-1'></i>${corrida.cidade}</p>
                             </div>
                             <div class="race-buttons">
-                                ${inscricoesBtnHTML}
-                                ${resultadosBtnHTML}
+                                ${actionButtonHTML}
                             </div>
                         </div>
                     </div>
                 </div>`;
         }).join('');
-    };
+    }
 
     window.showRaceResultsModal = function(raceId, event) {
         if (event) event.stopPropagation();
@@ -109,7 +128,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const race = appState.allCorridas.copaAlcer?.[raceId] || appState.allCorridas.geral?.[raceId];
         const results = appState.resultadosEtapas[raceId];
 
-        if (!race || !results) return;
+        if (!race || !results) {
+            console.error("Dados da corrida ou resultados não encontrados para o ID:", raceId);
+            return;
+        }
 
         elements.modalTitle.textContent = `Resultados - ${race.nome}`;
         
@@ -125,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <thead class="table-header"><tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Atleta</th><th class="px-4 py-2">Equipe</th><th class="px-4 py-2">Tempo</th></tr></thead>
                                 <tbody>
                                     ${atletas.map(atleta => `
-                                        <tr class="bg-gray-800 border-b border-gray-700">
+                                        <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
                                             <td class="px-4 py-2 font-medium">${atleta.classificacao}</td>
                                             <td class="px-4 py-2">${atleta.nome}</td>
                                             <td class="px-4 py-2 text-gray-400">${atleta.assessoria || 'Individual'}</td>
