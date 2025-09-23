@@ -21,17 +21,17 @@
             <div class="text-2xl font-bold text-white">🏃‍♀️🏃‍♂️ Corredores de Rua <span class="text-blue-400">Rio Preto</span></div>
             <div>
                 <a href="#calendario-copa" class="nav-link">Copa Alcer</a>
-                <a href="#calendario-geral" class="nav-link">Corridas da Região</a>
                 <a href="#search-athlete" class="nav-link">Buscar Atleta</a>
+                <a href="#resultados-anteriores" class="nav-link">Resultados</a>
             </div>
         </nav>
     </header>
 
     <main class="container mx-auto px-6 py-8">
         <section id="search-athlete" class="pt-8 mb-16">
-            <h2 class="section-title">Resultados do Atleta</h2>
+            <h2 class="section-title">Encontre Seus Resultados</h2>
             <div class="max-w-2xl mx-auto bg-gray-800 p-6 rounded-lg shadow-lg">
-                <p class="text-center text-gray-400 mb-4">Digite o nome completo ou parcial do atleta para ver seu histórico de resultados em todos os eventos.</p>
+                <p class="text-center text-gray-400 mb-4">Digite seu nome para ver seu histórico em todas as corridas e no ranking.</p>
                 <div class="flex gap-2">
                     <input type="text" id="global-search-input" placeholder="Digite o nome do atleta..." class="search-input flex-grow">
                     <button id="global-search-button" class="search-button"><i class='bx bx-search'></i> Buscar</button>
@@ -41,7 +41,7 @@
         </section>
 
         <section id="calendario-copa" class="pt-8">
-            <h2 class="section-title">Calendário e Resultados - <span class="text-blue-400">Copa Alcer 2025</span></h2>
+            <h2 class="section-title">Próximas Etapas - <span class="text-blue-400">Copa Alcer</span></h2>
             <div id="copa-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <p class="loading-message">Carregando calendário da Copa...</p>
             </div>
@@ -49,14 +49,7 @@
 
         <section id="ranking-copa" class="pt-16">
             <h2 class="section-title">Ranking Geral - <span class="text-blue-400">Copa Alcer</span></h2>
-            <div class="flex flex-wrap justify-center gap-4 mb-8">
-                <div>
-                    <label for="filtro-tipo-ranking" class="filter-label">Tipo de Ranking</label>
-                    <select id="filtro-tipo-ranking" class="ranking-filter">
-                        <option value="geral">Geral</option>
-                        <option value="faixa_etaria">Por Faixa Etária</option>
-                    </select>
-                </div>
+            <div class="flex justify-center gap-4 mb-8">
                 <div>
                     <label for="filtro-percurso" class="filter-label">Percurso</label>
                     <select id="filtro-percurso" class="ranking-filter"><option value="5K">5K</option><option value="10K">10K</option></select>
@@ -77,8 +70,15 @@
             </div>
         </section>
 
+        <section id="resultados-anteriores" class="pt-16">
+            <h2 class="section-title">Resultados de Etapas Anteriores</h2>
+            <div id="resultados-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="loading-message">Carregando resultados...</p>
+            </div>
+        </section>
+
         <section id="calendario-geral" class="pt-16">
-            <h2 class="section-title">Outras Corridas da Região</h2>
+            <h2 class="section-title">Outras Corridas da Região (Agendadas)</h2>
             <div id="geral-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <p class="loading-message">Carregando outras corridas...</p>
             </div>
