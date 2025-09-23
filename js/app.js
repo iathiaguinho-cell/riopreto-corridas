@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
         filtroGenero: document.getElementById('filtro-genero'),
         copaContainer: document.getElementById('copa-container'),
         geralContainer: document.getElementById('geral-container'),
-        resultadosContainer: document.getElementById('resultados-container') // Novo container
+        resultadosContainer: document.getElementById('resultados-container')
     };
 
     function initializeApp() {
@@ -66,15 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const hoje = new Date();
         hoje.setHours(0, 0, 0, 0);
 
-        // Separa corridas da Copa em agendadas e realizadas
+        // Separa as corridas da Copa em agendadas e realizadas
         const corridasAgendadasCopa = todasCorridasCopa.filter(c => new Date(c.data) >= hoje);
         const corridasRealizadas = todasCorridasCopa.filter(c => new Date(c.data) < hoje);
         
-        // Renderiza calendários de corridas futuras
         renderCalendar(corridasAgendadasCopa, elements.copaContainer, 'inscrições');
         renderCalendar(todasCorridasGerais, elements.geralContainer, 'inscrições');
-
-        // Renderiza a lista de corridas com resultados
         renderCalendar(corridasRealizadas, elements.resultadosContainer, 'resultados');
         
         updateRankingView();
@@ -98,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 actionButtonHTML = corrida.linkInscricao ?
                     `<a href="${corrida.linkInscricao}" target="_blank" rel="noopener noreferrer" class="inscricoes-button"><i class='bx bx-link-external mr-2'></i>Inscrições</a>` :
                     `<div class="race-button-disabled">Inscrições Encerradas</div>`;
-            } else { // 'resultados'
+            } else { 
                 actionButtonHTML = appState.resultadosEtapas[corrida.id] ?
                     `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}', event)"><i class='bx bx-table mr-2'></i>Ver Resultados</button>` :
                     `<div class="race-button-disabled">Resultados em Breve</div>`;
