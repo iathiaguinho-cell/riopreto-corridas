@@ -1,11 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-    if (!firebase.apps.length) { firebase.initializeApp(FIREBASE_CONFIG); }
+    if (!firebase.apps.length) {
+        firebase.initializeApp(FIREBASE_CONFIG);
+    }
 
     const appState = {
-        atletas: {},
-        corridas: {},
-        resultados: {},
-        rankingData: {}
+        rankingData: {},
+        resultadosEtapas: {},
+        allCorridas: {}
     };
 
     const elements = {
@@ -31,57 +32,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function addEventListeners() {
+        elements.filtroPercurso.addEventListener('change', updateRankingView);
+        elements.filtroGenero.addEventListener('change', updateRankingView);
         elements.globalSearchButton.addEventListener('click', performGlobalSearch);
         elements.globalSearchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') performGlobalSearch(); });
+        elements.rankingToggleButton.addEventListener('click', toggleRankingExpansion);
         elements.modalOverlay.addEventListener('click', (e) => { if (e.target === elements.modalOverlay) closeResultsModal(); });
-        // Add listeners para filtros de ranking se necessário
     }
-    
-    async function fetchAllData() {
-        const db = firebase.database();
-        const fetchData = (path) => db.ref(path).once('value').then(snap => snap.val() || {});
 
-        [
-            appState.atletas, 
-            appState.corridas, 
-            appState.resultados, 
-            appState.rankingData
-        ] = await Promise.all([
-            fetchData('atletas'),
-            fetchData('corridas'),
-            fetchData('resultados'),
-            fetchData('rankingCopaAlcer')
-        ]);
+    function fetchAllData() {
+        const db = firebase.database();
         
-        console.log("Dados carregados (nova estrutura):", appState);
-        renderAllCalendars();
-        // Chamar a renderização do ranking aqui
+        db.ref('corridas').on('value', s => { 
+            appState.allCorridas = s.val() || {}; 
+            renderAllCalendars(); 
+        });
+        db.ref('resultadosEtapas').on('value', s => { 
+            appState.resultadosEtapas = s.val() || {}; 
+            renderAllCalendars(); 
+        });
+        db.ref('rankingCopaAlcer').on('value', s => { 
+            appState.rankingData = s.val() || {}; 
+            updateRankingView(); 
+        });
     }
 
     function renderAllCalendars() {
-        const todasCorridas = Object.values(appState.corridas);
-        // Filtra para mostrar apenas corridas agendadas no calendário
-        const corridasCopa = todasCorridas.filter(c => c.tipo === 'copaAlcer' && c.status === 'agendada').sort((a,b) => new Date(a.data) - new Date(b.data));
-        const corridasGerais = todasCorridas.filter(c => c.tipo === 'geral' && c.status === 'agendada').sort((a,b) => new Date(a.data) - new Date(b.data));
-
-        renderCalendar(corridasCopa, elements.copaContainer);
-        renderCalendar(corridasGerais, elements.geralContainer);
+        if (!appState.allCorridas) return;
+        renderCalendar(appState.allCorridas.copaAlcer, 'copa-container');
+        renderCalendar(appState.allCorridas.geral, 'geral-container');
     }
-    
-    window.renderCalendar = function(corridas, container) {
-        if (!container) return;
-        if (corridas.length === 0) {
-            container.innerHTML = `<p class="text-gray-500 text-center col-span-full">Nenhuma corrida agendada.</p>`;
+
+    window.renderCalendar = function(corridas, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container || !corridas) {
+            container.innerHTML = '<p class="loading-message">Nenhuma corrida cadastrada.</p>';
             return;
         }
         
-        container.innerHTML = corridas.map(corrida => {
+        const corridasArray = Object.values(corridas).sort((a, b) => new Date(a.data) - new Date(b.data));
+        container.innerHTML = corridasArray.map(corrida => {
             const dataObj = new Date(`${corrida.data}T12:00:00Z`);
             const dia = String(dataObj.getDate()).padStart(2, '0');
             const mes = dataObj.toLocaleString("pt-BR", { month: "short" }).replace(".", "").toUpperCase();
             
-            // Botão de resultados só aparece para corridas realizadas
-            const resultadosBtnHTML = `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}', event)"><i class='bx bx-table mr-2'></i>Resultados</button>`;
+            const resultadosBtnHTML = appState.resultadosEtapas[corrida.id] ?
+                `<button class="results-button" onclick="showRaceResultsModal('${corrida.id}', event)"><i class='bx bx-table mr-2'></i>Resultados</button>` :
+                `<div class="race-button-disabled">Resultados em Breve</div>`;
             
             const inscricoesBtnHTML = corrida.linkInscricao ?
                 `<a href="${corrida.linkInscricao}" target="_blank" rel="noopener noreferrer" class="inscricoes-button"><i class='bx bx-link-external mr-2'></i>Inscrições</a>` :
@@ -109,47 +106,52 @@ document.addEventListener('DOMContentLoaded', () => {
     window.showRaceResultsModal = function(raceId, event) {
         if (event) event.stopPropagation();
         
-        const corrida = appState.corridas[raceId];
-        const todosResultados = Object.values(appState.resultados);
-        const resultadosDaCorrida = todosResultados.filter(r => r.corridaId === raceId);
+        const race = appState.allCorridas.copaAlcer?.[raceId] || appState.allCorridas.geral?.[raceId];
+        const results = appState.resultadosEtapas[raceId];
 
-        if (!corrida || resultadosDaCorrida.length === 0) {
-            alert("Resultados para esta corrida ainda não foram publicados.");
-            return;
-        }
+        if (!race || !results) return;
 
-        elements.modalTitle.textContent = `Resultados - ${corrida.nome}`;
-        let contentHTML = '';
-
-        const groupedResults = resultadosDaCorrida.reduce((acc, res) => {
-            const key = `${res.percurso} - ${res.genero}`;
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(res);
-            return acc;
-        }, {});
-
-        for (const groupKey in groupedResults) {
-            contentHTML += `<h3 class="modal-category-title">${groupKey}</h3>`;
-            const atletasDoGrupo = groupedResults[groupKey].sort((a,b) => a.classificacao - b.classificacao);
-            
-            contentHTML += `<div class="overflow-x-auto"><table class="w-full text-sm text-left text-gray-300 results-table">
-                                <thead class="table-header"><tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Atleta</th><th class="px-4 py-2">Equipe</th><th class="px-4 py-2">Tempo</th></tr></thead><tbody>`;
-            atletasDoGrupo.forEach(resultado => {
-                const atletaInfo = appState.atletas[resultado.atletaId];
-                contentHTML += `<tr class="bg-gray-800 border-b border-gray-700">
-                                    <td class="px-4 py-2 font-medium">${resultado.classificacao}</td>
-                                    <td class="px-4 py-2">${atletaInfo.nome}</td>
-                                    <td class="px-4 py-2 text-gray-400">${resultado.assessoria || 'Individual'}</td>
-                                    <td class="px-4 py-2 font-mono">${resultado.tempo}</td>
-                               </tr>`;
-            });
-            contentHTML += `</tbody></table></div>`;
-        }
+        elements.modalTitle.textContent = `Resultados - ${race.nome}`;
         
+        let contentHTML = '';
+        for (const percurso in results) {
+            for (const genero in results[percurso]) {
+                const atletas = results[percurso][genero];
+                if (atletas && atletas.length > 0) {
+                    contentHTML += `<h3 class="modal-category-title">${percurso} - ${genero.charAt(0).toUpperCase() + genero.slice(1)}</h3>`;
+                    contentHTML += `
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm text-left text-gray-300 results-table">
+                                <thead class="table-header"><tr><th class="px-4 py-2">#</th><th class="px-4 py-2">Atleta</th><th class="px-4 py-2">Equipe</th><th class="px-4 py-2">Tempo</th></tr></thead>
+                                <tbody>
+                                    ${atletas.map(atleta => `
+                                        <tr class="bg-gray-800 border-b border-gray-700">
+                                            <td class="px-4 py-2 font-medium">${atleta.classificacao}</td>
+                                            <td class="px-4 py-2">${atleta.nome}</td>
+                                            <td class="px-4 py-2 text-gray-400">${atleta.assessoria || 'Individual'}</td>
+                                            <td class="px-4 py-2 font-mono">${atleta.tempo}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>`;
+                }
+            }
+        }
         elements.modalContent.innerHTML = contentHTML;
+        elements.modalSearchInput.value = '';
+        elements.modalSearchInput.onkeyup = () => filterResultsInModal();
         elements.modalOverlay.classList.remove('hidden');
     }
     
+    function filterResultsInModal() {
+        const searchTerm = elements.modalSearchInput.value.toUpperCase();
+        elements.modalContent.querySelectorAll('.results-table tbody tr').forEach(row => {
+            const athleteName = row.cells[1].textContent.toUpperCase();
+            row.style.display = athleteName.includes(searchTerm) ? '' : 'none';
+        });
+    }
+
     window.closeResultsModal = function() {
         elements.modalOverlay.classList.add('hidden');
     }
@@ -160,40 +162,118 @@ document.addEventListener('DOMContentLoaded', () => {
             elements.globalSearchOutput.innerHTML = `<p class="text-yellow-400 text-center p-4">Digite pelo menos 3 caracteres.</p>`;
             return;
         }
+        elements.globalSearchOutput.innerHTML = `<p class="text-gray-400 text-center p-4">Buscando...</p>`;
+        
+        let allResults = [];
+        const allRaces = { ...appState.allCorridas.copaAlcer, ...appState.allCorridas.geral };
 
-        const atletaIdsEncontrados = Object.keys(appState.atletas).filter(id => 
-            appState.atletas[id].nome.toUpperCase().includes(searchTerm)
-        );
-
-        if (atletaIdsEncontrados.length === 0) {
-            elements.globalSearchOutput.innerHTML = `<p class="text-red-400 text-center p-4">Nenhum atleta encontrado.</p>`;
-            return;
+        for (const raceId in appState.resultadosEtapas) {
+            const raceName = allRaces[raceId]?.nome || `Etapa`;
+            for (const percurso in appState.resultadosEtapas[raceId]) {
+                for (const genero in appState.resultadosEtapas[raceId][percurso]) {
+                    const atletas = appState.resultadosEtapas[raceId][percurso][genero];
+                    if (Array.isArray(atletas)) {
+                        const filtered = atletas.filter(atleta => atleta.nome?.toUpperCase().includes(searchTerm));
+                        filtered.forEach(atleta => allResults.push({ ...atleta, tipo: 'corrida', genero, percurso, raceName }));
+                    }
+                }
+            }
         }
         
-        const todosResultados = Object.values(appState.resultados);
-        let html = '';
+        for (const genero in appState.rankingData) {
+            for (const percurso in appState.rankingData[genero]) {
+                const atletas = appState.rankingData[genero][percurso];
+                if (Array.isArray(atletas)) {
+                    const filtered = atletas.filter(atleta => atleta.nome?.toUpperCase().includes(searchTerm));
+                    filtered.forEach(atleta => allResults.push({ ...atleta, tipo: 'ranking', genero, percurso, raceName: 'Copa Alcer' }));
+                }
+            }
+        }
 
-        atletaIdsEncontrados.forEach(atletaId => {
-            const atletaInfo = appState.atletas[atletaId];
-            const resultadosDoAtleta = todosResultados.filter(r => r.atletaId === atletaId);
-            
-            if (resultadosDoAtleta.length > 0) {
-                html += `<div class="athlete-profile-card"><div class="athlete-profile-header">${atletaInfo.nome}</div><div>`;
-                resultadosDoAtleta.forEach(res => {
-                    const corridaInfo = appState.corridas[res.corridaId];
+        displayGlobalResults(allResults);
+    }
+
+    function displayGlobalResults(results) {
+        if (results.length === 0) {
+            elements.globalSearchOutput.innerHTML = `<p class="text-red-400 text-center p-4">Nenhum resultado encontrado.</p>`;
+            return;
+        }
+        const groupedByAthlete = results.reduce((acc, result) => {
+            (acc[result.nome] = acc[result.nome] || []).push(result);
+            return acc;
+        }, {});
+
+        let html = '';
+        for (const athleteName in groupedByAthlete) {
+            html += `<div class="athlete-profile-card"><div class="athlete-profile-header">${athleteName}</div><div>`;
+            groupedByAthlete[athleteName].forEach(res => {
+                if (res.tipo === 'corrida') {
                     html += `
                         <div class="athlete-result-item">
-                            <div><div class="result-label">Evento</div><div class="result-value">${corridaInfo.nome}</div></div>
+                            <div><div class="result-label">Evento</div><div class="result-value">${res.raceName}</div></div>
                             <div><div class="result-label">Percurso</div><div class="result-value">${res.percurso} ${res.genero}</div></div>
                             <div><div class="result-label">Posição</div><div class="result-value">${res.classificacao}º</div></div>
                             <div><div class="result-label">Tempo</div><div class="result-value">${res.tempo}</div></div>
                         </div>`;
-                });
-                html += `</div></div>`;
-            }
-        });
+                } else if (res.tipo === 'ranking') {
+                     html += `
+                        <div class="athlete-result-item" style="background-color: #2d3748;">
+                            <div><div class="result-label">Evento</div><div class="result-value text-blue-400">${res.raceName}</div></div>
+                            <div><div class="result-label">Percurso</div><div class="result-value">${res.percurso} ${res.genero}</div></div>
+                            <div><div class="result-label">Pos. no Ranking</div><div class="result-value">${res.classificacao}º</div></div>
+                            <div><div class="result-label">Pontos</div><div class="result-value">${res.acumulado}</div></div>
+                        </div>`;
+                }
+            });
+            html += `</div></div>`;
+        }
+        elements.globalSearchOutput.innerHTML = html;
+    }
 
-        elements.globalSearchOutput.innerHTML = html || `<p class="text-red-400 text-center p-4">Nenhum resultado encontrado para este atleta.</p>`;
+    function updateRankingView() {
+        const percurso = elements.filtroPercurso.value;
+        const genero = elements.filtroGenero.value;
+        const atletas = appState.rankingData[genero]?.[percurso] || [];
+        renderRankingTable(atletas);
+    }
+    
+    function renderRankingTable(atletas) {
+        if (!elements.rankingTableBody) return;
+        const header = document.getElementById('ranking-table-header');
+        header.innerHTML = `
+            <th class="px-6 py-3">Pos.</th><th class="px-6 py-3">Atleta</th>
+            <th class="px-6 py-3 text-center">Etapa 1</th><th class="px-6 py-3 text-center">Etapa 2</th>
+            <th class="px-6 py-3 text-center">Etapa 3</th><th class="px-6 py-3 text-center">Etapa 4</th>
+            <th class="px-6 py-3 text-center">Pontos</th>
+        `;
+        
+        const sortedAthletes = [...atletas].sort((a, b) => (a.classificacao || 999) - (b.classificacao || 999));
+        
+        elements.rankingTableBody.innerHTML = sortedAthletes.map(atleta => `
+            <tr class="bg-gray-800 border-b border-gray-700 hover:bg-gray-600">
+                <td class="px-6 py-4 font-medium text-white">${atleta.classificacao}</td>
+                <td class="px-6 py-4"><div class="font-semibold">${atleta.nome}</div><div class="text-xs text-gray-400">${atleta.idade} anos</div></td>
+                <td class="px-6 py-4 text-center">${atleta.etapa1 || "-"}</td>
+                <td class="px-6 py-4 text-center">${atleta.etapa2 || "-"}</td>
+                <td class="px-6 py-4 text-center">${atleta.etapa3 || "-"}</td>
+                <td class="px-6 py-4 text-center">${atleta.etapa4 || "-"}</td>
+                <td class="px-6 py-4 text-center font-bold text-blue-400">${atleta.acumulado}</td>
+            </tr>
+        `).join("");
+
+        if (sortedAthletes.length > 10) {
+            elements.rankingToggleContainer.classList.remove('hidden');
+            elements.rankingTableBody.classList.add('collapsed');
+            elements.rankingToggleButton.textContent = 'Ver Ranking Completo';
+        } else {
+            elements.rankingToggleContainer.classList.add('hidden');
+            elements.rankingTableBody.classList.remove('collapsed');
+        }
+    }
+
+    function toggleRankingExpansion() {
+        elements.rankingTableBody.classList.toggle('collapsed');
+        elements.rankingToggleButton.textContent = elements.rankingTableBody.classList.contains('collapsed') ? 'Ver Ranking Completo' : 'Mostrar Menos';
     }
 
     initializeApp();
